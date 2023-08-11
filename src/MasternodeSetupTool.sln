@@ -15,6 +15,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "global", "global", "{5B331F
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MasternodeSetupTool", "MasternodeSetupTool\MasternodeSetupTool.csproj", "{09DC690D-802F-4695-9912-EDE207D541FB}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{CB02F774-E7E4-4794-B171-73050F3C5ECB}"
+	ProjectSection(SolutionItems) = preProject
+		Resources\Logo.png = Resources\Logo.png
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

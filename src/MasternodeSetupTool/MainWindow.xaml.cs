@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -37,14 +38,22 @@ namespace MasternodeSetupTool
         private string collateralAddress;
         private string cirrusAddress;
 
-        public MainWindow()
+        public MainWindow(string[] args)
         {
             InitializeComponent();
 
             this.stackPanel = (StackPanel)this.FindName(MainStackPanelTag);
             this.statusBar = (TextBlock)this.FindName(StatusBarTextBlockTag);
 
-            this.registrationService = new RegistrationService(NetworkType.Regtest, this.statusBar);
+            NetworkType networkType = NetworkType.Mainnet;
+
+            if (args.Any(a => a.Contains("-testnet")))
+                networkType = NetworkType.Testnet;
+
+            if (args.Any(a => a.Contains("-regtest")))
+                networkType = NetworkType.Regtest;
+
+            this.registrationService = new RegistrationService(networkType, this.statusBar);
 
             this.timer = new DispatcherTimer
             {
