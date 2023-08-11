@@ -110,7 +110,10 @@ namespace MasternodeSetupTool
                 argumentBuilder.Append("-addressindex=1 ");
 
             if (nodeType == NodeType.SideChain)
+            {
                 argumentBuilder.Append($"-counterchainapiport={this.mainchainNetwork.DefaultAPIPort} ");
+                argumentBuilder.Append($"-signalruri=http://127.0.0.1 ");
+            }
 
             if (this.networkType == NetworkType.Testnet)
                 argumentBuilder.Append("-testnet ");
