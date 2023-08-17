@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Media;
 using System.Windows.Threading;
 using NBitcoin;
 
@@ -11,7 +13,7 @@ namespace MasternodeSetupTool
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, ILogger
     {
         private const string MainStackPanelTag = "Main";
         private const string StatusBarTextBlockTag = "txtStatusBar";
@@ -38,6 +40,19 @@ namespace MasternodeSetupTool
         private string collateralAddress;
         private string cirrusAddress;
 
+        private bool PrintStacktraces
+        {
+            get { return true; }
+        }
+
+        private Style FlatStyle
+        {
+            get
+            {
+                return (Style)this.FindResource(ToolBar.ButtonStyleKey);
+            }
+        }
+
         public MainWindow(string[] args)
         {
             InitializeComponent();
@@ -53,7 +68,7 @@ namespace MasternodeSetupTool
             if (args.Any(a => a.Contains("-regtest")))
                 networkType = NetworkType.Regtest;
 
-            this.registrationService = new RegistrationService(networkType, this.statusBar);
+            this.registrationService = new RegistrationService(networkType, this);
 
             this.timer = new DispatcherTimer
             {
@@ -74,11 +89,15 @@ namespace MasternodeSetupTool
                 {
                     this.createdButtons = true;
 
+                    Style flatStyle = this.FlatStyle;
+
                     var button = new Button
                     {
                         Content = "Run Masternode",
                         Tag = "RunMasterNode",
-                        Height = DefaultButtonHeight
+                        Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
+                        Padding = new Thickness(4.0),
+                        Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
                     };
 
                     button.Click += new RoutedEventHandler(Button_ClickAsync);
@@ -88,7 +107,9 @@ namespace MasternodeSetupTool
                     {
                         Content = "Setup Masternode",
                         Tag = "SetupMasterNode",
-                        Height = DefaultButtonHeight
+                        Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
+                        Padding = new Thickness(4.0),
+                        Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
                     };
 
                     button.Click += new RoutedEventHandler(Button_ClickAsync);
@@ -134,8 +155,7 @@ namespace MasternodeSetupTool
                 {
                     MessageBox.Show("Federation key does not exist", "Key file missing", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.Yes);
 
-                    this.nextState = null;
-                    this.currentState = "Begin";
+                    ResetState();
 
                     return true;
                 }
@@ -180,8 +200,7 @@ namespace MasternodeSetupTool
                 await this.registrationService.StartMasterNodeDashboardAsync().ConfigureAwait(false);
                 await this.registrationService.LaunchBrowserAsync($"http://localhost:{RegistrationService.DashboardPort}").ConfigureAwait(false);
 
-                this.nextState = null;
-                this.currentState = "Begin";
+                ResetState();
 
                 return true;
             }
@@ -195,8 +214,7 @@ namespace MasternodeSetupTool
             {
                 if (MessageBox.Show("100K collateral is required to operate a Masternode; in addition, a balance of 500.1 CRS is required to fund the registration transaction. Are you happy to proceed?", "End-User License Agreement", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
                 {
-                    this.nextState = null;
-                    this.currentState = "Begin";
+                    ResetState();
 
                     return true;
                 }
@@ -210,8 +228,7 @@ namespace MasternodeSetupTool
                 {
                     if (MessageBox.Show("Federation key exists. Shall we create a new one?", "Key file already present", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.No)
                     {
-                        this.nextState = null;
-                        this.currentState = "Begin";
+                        ResetState();
 
                         return true;
                     }
@@ -230,6 +247,13 @@ namespace MasternodeSetupTool
 
                     this.passphrase = inputBox.ShowDialog();
 
+                    if (this.passphrase == null)
+                    {
+                        Error("No passphrase provided, aborting...");
+                        ResetState();
+                        return true;
+                    }
+
                     if (!string.IsNullOrEmpty(this.passphrase))
                         break;
 
@@ -247,7 +271,13 @@ namespace MasternodeSetupTool
             if (this.currentState == "Setup_CreateRestoreUseExisting_StartMainChain")
             {
                 // All 3 sub-branches of this state require the mainchain and sidechain nodes to be initialized, so do that first.
-                await this.registrationService.StartNodeAsync(NodeType.MainChain).ConfigureAwait(false);
+                if (!await this.registrationService.StartNodeAsync(NodeType.MainChain).ConfigureAwait(false))
+                {
+                    Error("Cannot start the Mainchain node, aborting...");
+                    ResetState();
+
+                    return true;
+                }
 
                 this.nextState = "Setup_CreateRestoreUseExisting_MainChainSynced";
             }
@@ -263,7 +293,13 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_StartSideChain")
             {
-                await this.registrationService.StartNodeAsync(NodeType.SideChain).ConfigureAwait(false);
+                if (!await this.registrationService.StartNodeAsync(NodeType.SideChain).ConfigureAwait(false))
+                {
+                    Error("Cannot start the Sidechain node, aborting...");
+                    ResetState();
+
+                    return true;
+                }
 
                 this.nextState = "Setup_CreateRestoreUseExisting_SideChainSynced";
             }
@@ -396,8 +432,7 @@ namespace MasternodeSetupTool
             {
                 if (MessageBox.Show("Insufficient balance in the mining wallet. Perform a cross-chain transfer of 500.1 STRAX?", "Registration Fee Missing", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.No)
                 {
-                    this.nextState = null;
-                    this.currentState = "Begin"; // TODO: Maybe we don't have to go all the way back to the beginning, but it is unclear what should be done if they select 'No'
+                    ResetState(); // TODO: Maybe we don't have to go all the way back to the beginning, but it is unclear what should be done if they select 'No'
 
                     return true;
                 }
@@ -528,22 +563,76 @@ namespace MasternodeSetupTool
             {
                 return;
             }
-            
+
             switch (button.Tag.ToString())
             {
                 case "RunMasterNode":
-                {
-                    this.nextState = "RunMasterNode_KeyPresent";
+                    {
+                        this.nextState = "RunMasterNode_KeyPresent";
 
-                    break;
-                }
+                        break;
+                    }
                 case "SetupMasterNode":
-                {
-                    this.nextState = "SetupMasterNode_Eula";
+                    {
+                        this.nextState = "SetupMasterNode_Eula";
 
-                    break;
-                }
+                        break;
+                    }
             }
+        }
+
+        private void ResetState()
+        {
+            this.nextState = null;
+            this.currentState = "Begin";
+        }
+
+        private void Log(string message, Color color)
+        {
+            var inline = new Run(message + "\n");
+            inline.Foreground = new SolidColorBrush(color);
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                this.statusBar.Inlines.Add(inline);
+            });
+        }
+
+        private void Log(string message)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                this.statusBar.Text += message + "\n";
+            });
+        }
+
+        private void LogError(string message)
+        {
+            Log(message, Color.FromRgb(255, 51, 51));
+        }
+
+        public void Info(string message)
+        {
+            Log(message);
+        }
+
+        public void Error(string message)
+        {
+            LogError(message);
+        }
+
+        public void Error(Exception exception)
+        {
+            if (this.PrintStacktraces)
+            {
+                LogError($"{exception}");
+            }
+        }
+
+        public void Error(string message, Exception exception)
+        {
+            Error(message);
+            Error(exception);
         }
     }
 }

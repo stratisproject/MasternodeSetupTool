@@ -5,16 +5,34 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Stratis Masternode Setup Tool" Name="MainWindowControl" Height="450" Width="800">
-    <DockPanel>
-        <StackPanel Name="Main" DockPanel.Dock="Top" Orientation="Vertical" Height="380" Width="800">
-            <StackPanel.Background>
-                <ImageBrush ImageSource="/Logo.png"/>
-            </StackPanel.Background>
-        </StackPanel>
-        <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem>
-                <TextBlock Name="txtStatusBar" Text="" />
-            </StatusBarItem>
-        </StatusBar>
-    </DockPanel>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"></ColumnDefinition>
+            <ColumnDefinition Width="8*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="64" />
+        </Grid.RowDefinitions>
+
+        <Grid Margin="20" Grid.Column="0" Grid.RowSpan="2" Grid.Row="0">
+            <Grid.Background >
+                <ImageBrush ImageSource="/Logo.png" Stretch="Uniform" />
+            </Grid.Background>
+        </Grid>
+
+        <ScrollViewer Grid.Row="0" Grid.Column="1">
+            <TextBlock 
+                ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                ScrollViewer.VerticalScrollBarVisibility="Visible"
+                ScrollViewer.CanContentScroll="True" 
+                Name="txtStatusBar" Text="" />
+        </ScrollViewer>
+
+        <StackPanel Grid.Column="1" Grid.Row="1" Name="Main" Orientation="Horizontal" HorizontalAlignment="Center" />
+
+    </Grid>
+
 </Window>

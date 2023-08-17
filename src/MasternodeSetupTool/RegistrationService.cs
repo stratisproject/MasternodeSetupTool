@@ -34,16 +34,16 @@ namespace MasternodeSetupTool
         private NetworkType networkType;
         private Network mainchainNetwork;
         private Network sidechainNetwork;
-        private TextBlock statusBar;
+        private ILogger logger;
 
         private string rootDataDir;
         private string pubKey;
 
-        public RegistrationService(NetworkType networkType, TextBlock statusBar)
+        public RegistrationService(NetworkType networkType, ILogger logger)
         {
             this.rootDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StratisNode");
             this.networkType = networkType;
-            this.statusBar = statusBar;
+            this.logger = logger;
 
             if (this.networkType == NetworkType.Mainnet)
             {
@@ -62,8 +62,6 @@ namespace MasternodeSetupTool
                 this.mainchainNetwork = new StraxRegTest();
                 this.sidechainNetwork = new CirrusRegTest();
             }
-
-            this.statusBar = statusBar;
         }
 
         public NetworkType NetworkType
@@ -93,16 +91,28 @@ namespace MasternodeSetupTool
 
         private void Status(string message)
         {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                return this.statusBar.Text = message;
-            });
+            logger.Info(message);
+        }
+
+        private void Error(string message)
+        {
+            logger.Error(message);
+        }
+
+        private void Error(Exception exception)
+        {
+            logger.Error(exception);
+        }
+
+        private void Error(string message, Exception exception)
+        {
+            logger.Error(message, exception);
         }
 
         public async Task<bool> StartNodeAsync(NodeType nodeType)
         {
             var argumentBuilder = new StringBuilder();
-            
+
             argumentBuilder.Append("Stratis.CirrusMinerD.exe ");
             argumentBuilder.Append($"-{nodeType.ToString().ToLowerInvariant()} ");
 
@@ -149,7 +159,7 @@ namespace MasternodeSetupTool
             return true;
         }
 
-        private async Task<bool> CheckNodeIsRunning(NodeType nodeType, int apiPort)
+        private async Task<bool> CheckNodeIsRunningAsync(NodeType nodeType, int apiPort)
         {
             try
             {
@@ -174,7 +184,7 @@ namespace MasternodeSetupTool
             {
                 if (cancellationTokenSource.IsCancellationRequested)
                 {
-                    Status($"{nodeType} node failed to initialized in 60 seconds...");
+                    Error($"{nodeType} node failed to initialized in 60 seconds...");
                     break;
                 }
 
@@ -190,7 +200,7 @@ namespace MasternodeSetupTool
                 }
                 catch (Exception ex)
                 {
-                    Status(ex.ToString());
+                    Error(ex);
                 }
 
                 await Task.Delay(TimeSpan.FromSeconds(3));
@@ -267,7 +277,7 @@ namespace MasternodeSetupTool
             }
             catch (Exception ex)
             {
-                Status($"ERROR: An exception occurred trying to get the first wallet address for wallet '{walletName}': {ex}");
+                Error($"ERROR: An exception occurred trying to get the first wallet address for wallet '{walletName}': {ex}", ex);
             }
 
             return null;
@@ -289,11 +299,11 @@ namespace MasternodeSetupTool
                     return true;
                 }
 
-                Status($"ERROR: The wallet '{walletName}' does not contain the required amount of {amountToCheck}.");
+                Error($"ERROR: The wallet '{walletName}' does not contain the required amount of {amountToCheck}.");
             }
             catch (Exception ex)
             {
-                Status($"ERROR: An exception occurred trying to check the wallet balance: {ex}");
+                Error($"ERROR: An exception occurred trying to check the wallet balance: {ex}", ex);
             }
 
             return false;
@@ -320,7 +330,7 @@ namespace MasternodeSetupTool
             }
             catch (Exception ex)
             {
-                Status($"ERROR: An exception occurred trying to recover your {chainName} wallet: {ex}");
+                Error($"ERROR: An exception occurred trying to recover your {chainName} wallet: {ex}", ex);
                 return false;
             }
 
@@ -334,7 +344,7 @@ namespace MasternodeSetupTool
             }
             else
             {
-                Status($"ERROR: {chainName} wallet failed to be restored, exiting the registration process.");
+                Error($"ERROR: {chainName} wallet failed to be restored, exiting the registration process.");
                 return false;
             }
 
@@ -358,7 +368,7 @@ namespace MasternodeSetupTool
             }
             catch (Exception ex)
             {
-                Status($"ERROR: An exception occurred trying to resync your wallet: {ex}");
+                Error($"ERROR: An exception occurred trying to resync your wallet: {ex}", ex);
                 return false;
             }
 
@@ -404,7 +414,7 @@ namespace MasternodeSetupTool
         public string CreateFederationKey()
         {
             string keyFilePath = Path.Combine(this.rootDataDir, this.sidechainNetwork.RootFolderName, this.sidechainNetwork.Name);
-            
+
             Status($"Your masternode private key will now be generated.");
 
             Directory.CreateDirectory(keyFilePath);
@@ -452,7 +462,7 @@ namespace MasternodeSetupTool
                 return true;
             }
 
-            Status("Error building cross-chain transfer transaction");
+            Error("Error building cross-chain transfer transaction");
 
             return false;
         }
@@ -521,7 +531,7 @@ namespace MasternodeSetupTool
             }
             catch (Exception ex)
             {
-                Status($"ERROR: An exception occurred trying to register your masternode: {ex}");
+                Error($"ERROR: An exception occurred trying to register your masternode: {ex}", ex);
 
                 return false;
             }
@@ -535,7 +545,7 @@ namespace MasternodeSetupTool
 
             if (memberInfo == null)
             {
-                Status("Unable to find federation member details");
+                Error("Unable to find federation member details");
                 return false;
             }
 
@@ -601,6 +611,7 @@ namespace MasternodeSetupTool
                 osSpecificArguments = $"-c \"{argumentBuilder}\"";
             }
 
+            //TODO: clone or choose
             var startInfo = new ProcessStartInfo
             {
                 Arguments = osSpecificArguments,
@@ -614,7 +625,7 @@ namespace MasternodeSetupTool
 
             if (process.HasExited)
             {
-                Status($"Masternode dashboard process failed to start, exiting...");
+                Error($"Masternode dashboard process failed to start, exiting...");
                 return false;
             }
 

@@ -55,10 +55,7 @@ namespace MasternodeSetupTool
 
         private void Box_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (!this.clicked)
-            {
-                e.Cancel = true;
-            }
+            this.box.DialogResult = this.clicked;
         }
 
         private void Ok_Click(object sender, RoutedEventArgs e)
@@ -68,9 +65,12 @@ namespace MasternodeSetupTool
             this.clicked = false;
         }
 
-        public string ShowDialog()
+        public string? ShowDialog()
         {
             this.box.ShowDialog();
+
+            if (this.box.DialogResult != true) 
+                return null;
 
             return this.input.Text;
         }
