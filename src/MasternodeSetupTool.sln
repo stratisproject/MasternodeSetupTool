@@ -23,6 +23,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.CirrusMinerD", "..\StratisFullNode\src\Stratis.CirrusMinerD\Stratis.CirrusMinerD.csproj", "{CEAEDDD8-675C-4683-89F6-A3500FA7CE69}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{94106470-C680-4192-8617-A1CAAB2A2E91}"
+	ProjectSection(SolutionItems) = preProject
+		..\StratisFullNode\src\Stratis.FullNode.sln = ..\StratisFullNode\src\Stratis.FullNode.sln
+	EndProjectSection
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "MasternodeSetupToolInstaller", "MasternodeSetupToolInstaller\MasternodeSetupToolInstaller.vdproj", "{F8DDE9EA-4D88-4CA6-BC73-157C8844D701}"
 EndProject
