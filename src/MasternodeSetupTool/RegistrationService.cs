@@ -126,7 +126,10 @@ namespace MasternodeSetupTool
             }
 
             if (this.networkType == NetworkType.Testnet)
+            {               
                 argumentBuilder.Append("-testnet ");
+                // argumentBuilder.Append("-reindex ");
+            }
 
             if (this.networkType == NetworkType.Regtest)
                 argumentBuilder.Append("-regtest ");
@@ -141,7 +144,7 @@ namespace MasternodeSetupTool
                 Arguments = osSpecificArguments,
                 FileName = osSpecificCommand,
                 UseShellExecute = true,
-                WorkingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\", "Stratis.CirrusMinerD"))
+                WorkingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CirrusMinerD"))
             };
 
             var process = Process.Start(startInfo);
@@ -257,6 +260,24 @@ namespace MasternodeSetupTool
             return result;
         }
 
+        public async Task<bool> FindWalletByNameAsync(int apiPort, string walletName)
+        {
+            try
+            {
+                WalletInfoModel walletInfo = await $"http://localhost:{apiPort}/api"
+                    .AppendPathSegment("wallet/list-wallets")
+                    .GetJsonAsync<WalletInfoModel>().ConfigureAwait(false);
+
+                return walletInfo.WalletNames.Contains(walletName);
+            }
+            catch (Exception ex)
+            {
+                Error($"ERROR: An exception occurred trying to find a wallet with a name '{walletName}'.", ex);
+            }
+
+            return false;
+        }
+
         public async Task<string> GetFirstWalletAddressAsync(int apiPort, string walletName)
         {
             try
@@ -277,7 +298,7 @@ namespace MasternodeSetupTool
             }
             catch (Exception ex)
             {
-                Error($"ERROR: An exception occurred trying to get the first wallet address for wallet '{walletName}': {ex}", ex);
+                Error($"ERROR: An exception occurred trying to get the first wallet address for wallet '{walletName}'.", ex);
             }
 
             return null;
@@ -303,7 +324,7 @@ namespace MasternodeSetupTool
             }
             catch (Exception ex)
             {
-                Error($"ERROR: An exception occurred trying to check the wallet balance: {ex}", ex);
+                Error($"ERROR: An exception occurred trying to check the wallet balance.", ex);
             }
 
             return false;
@@ -330,7 +351,7 @@ namespace MasternodeSetupTool
             }
             catch (Exception ex)
             {
-                Error($"ERROR: An exception occurred trying to recover your {chainName} wallet: {ex}", ex);
+                Error($"ERROR: An exception occurred trying to recover your {chainName} wallet.", ex);
                 return false;
             }
 
@@ -368,7 +389,7 @@ namespace MasternodeSetupTool
             }
             catch (Exception ex)
             {
-                Error($"ERROR: An exception occurred trying to resync your wallet: {ex}", ex);
+                Error($"ERROR: An exception occurred trying to resync your wallet.", ex);
                 return false;
             }
 
@@ -531,7 +552,7 @@ namespace MasternodeSetupTool
             }
             catch (Exception ex)
             {
-                Error($"ERROR: An exception occurred trying to register your masternode: {ex}", ex);
+                Error($"ERROR: An exception occurred trying to register your masternode.", ex);
 
                 return false;
             }

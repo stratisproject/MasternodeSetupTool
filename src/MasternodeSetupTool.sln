@@ -20,6 +20,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{
 		Resources\Logo.png = Resources\Logo.png
 	EndProjectSection
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "MasternodeSetupToolInstaller", "MasternodeSetupToolInstaller\MasternodeSetupToolInstaller.vdproj", "{399A5AEB-5D78-41C8-ACBC-3EDCDF180F14}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.CirrusMinerD", "..\StratisFullNode\src\Stratis.CirrusMinerD\Stratis.CirrusMinerD.csproj", "{CEAEDDD8-675C-4683-89F6-A3500FA7CE69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,11 +34,21 @@ Global
 		{09DC690D-802F-4695-9912-EDE207D541FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09DC690D-802F-4695-9912-EDE207D541FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09DC690D-802F-4695-9912-EDE207D541FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{399A5AEB-5D78-41C8-ACBC-3EDCDF180F14}.Debug|Any CPU.ActiveCfg = Debug
+		{399A5AEB-5D78-41C8-ACBC-3EDCDF180F14}.Release|Any CPU.ActiveCfg = Release
+		{CEAEDDD8-675C-4683-89F6-A3500FA7CE69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEAEDDD8-675C-4683-89F6-A3500FA7CE69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEAEDDD8-675C-4683-89F6-A3500FA7CE69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEAEDDD8-675C-4683-89F6-A3500FA7CE69}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6C780ABA-5872-4B83-AD3F-A5BD423AD907}
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 EndGlobal

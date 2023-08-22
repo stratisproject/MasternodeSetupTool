@@ -1,0 +1,4 @@
+[submodule "StratisFullNode"]
+	path = StratisFullNode
+	url = https://github.com/stratisproject/StratisFullNode.git
+	branch = release/1.4.0.7
