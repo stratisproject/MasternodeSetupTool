@@ -49,6 +49,8 @@ steps:
       echo `pwd`
       echo `ls -a`
 
+- script: 'type $(System.DefaultWorkingDirectory)\src\MasternodeSetupTool.sln'
+
 - script: '"$(devCmd)" $(System.DefaultWorkingDirectory)\src\MasternodeSetupTool.sln /Build "Release" /Project $(System.DefaultWorkingDirectory)\src\MasternodeSetupToolInstaller\MasternodeSetupToolInstaller.vdproj'
   displayName: Build Installer
   enabled: false
