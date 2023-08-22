@@ -39,5 +39,5 @@ steps:
     filename: '"$(disableToolPath)\DisableOutOfProcBuild.exe"'
     workingFolder: '"$(disableToolPath)"'
 
-- script: '"$(devCmd)" $(System.DefaultWorkingDirectory)\src\MasternodeSetupTool.sln /Build "Release" /Project $(System.DefaultWorkingDirectory)\src\MasternodeSetupToolInstaller\MasternodeSetupToolInstaller.vdproj'
+- script: '"$(devCmd)" "$(System.DefaultWorkingDirectory)\src\MasternodeSetupTool.sln"'
   displayName: Build Installer
