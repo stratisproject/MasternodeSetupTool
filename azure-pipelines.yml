@@ -23,6 +23,7 @@ steps:
 - task: NuGetToolInstaller@1
 
 - task: NuGetCommand@2
+  enabled: false
   inputs:
     restoreSolution: '$(solution)'
 
@@ -51,6 +52,7 @@ steps:
       echo "Files:"
       echo `ls -a`
     workingDirectory: '$(System.DefaultWorkingDirectory)'
+  enabled: false
 
 - script: '"$(devCmd)" "$(System.DefaultWorkingDirectory)\src\MasternodeSetupTool.sln" /Build "Release" /Project "$(System.DefaultWorkingDirectory)\src\MasternodeSetupToolInstaller\MasternodeSetupToolInstaller.vdproj"'
   displayName: Build Installer
