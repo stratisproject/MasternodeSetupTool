@@ -21,13 +21,13 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_2C85F696E6EA45BE9C8A37E63581C2D2"
+        "MsmKey" = "8:_55280CA243A54012BF5324771A12ED50"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_55280CA243A54012BF5324771A12ED50"
+        "MsmKey" = "8:_D5702ED9F5DF49DCA5DB40E8811DCDF3"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -124,14 +124,24 @@
         {
             "LaunchCondition"
             {
+                "{A06ECF26-33A3-4562-8140-9B0E340D4F24}:_06EA61D899D5427FA136FEC4047B2F17"
+                {
+                "Name" = "8:.NET Core"
+                "Message" = "8:[VSDNETCOREMSG]"
+                "AllowLaterVersions" = "11:FALSE"
+                "InstallUrl" = "8:https://dotnet.microsoft.com/download/dotnet-core/[NetCoreVerMajorDotMinor]"
+                "IsNETCore" = "11:TRUE"
+                "Architecture" = "2:0"
+                "Runtime" = "2:0"
+                }
             }
         }
         "File"
         {
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_2C85F696E6EA45BE9C8A37E63581C2D2"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D5702ED9F5DF49DCA5DB40E8811DCDF3"
             {
-            "SourcePath" = "8:..\\..\\..\\..\\..\\..\\Downloads\\strat.ico"
-            "TargetName" = "8:strat.ico"
+            "SourcePath" = "8:..\\Resources\\stratis.ico"
+            "TargetName" = "8:stratis.ico"
             "Tag" = "8:"
             "Folder" = "8:_7989ECBF90334586867428108D8F935A"
             "Condition" = "8:"
@@ -214,7 +224,7 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:MasternodeSetupToolInstaller"
+        "ProductName" = "8:Masternode Setup Tool"
         "ProductCode" = "8:{1CD0A1B3-9944-4A7B-A0B0-96DCF574DF6F}"
         "PackageCode" = "8:{35E3E384-60A8-4D96-9213-4CE5B0E709B3}"
         "UpgradeCode" = "8:{D9BE7D4F-6790-4C82-8F78-21688B924437}"
@@ -233,7 +243,7 @@
         "Keywords" = "8:stratis; blockchain;"
         "ARPCOMMENTS" = "8:This tool helps to setup Stratis Masternode in just a few clicks"
         "ARPURLINFOABOUT" = "8:https://www.stratisplatform.com"
-        "ARPPRODUCTICON" = "8:_2C85F696E6EA45BE9C8A37E63581C2D2"
+        "ARPPRODUCTICON" = "8:_D5702ED9F5DF49DCA5DB40E8811DCDF3"
         "ARPIconIndex" = "3:0"
         "SearchPath" = "8:"
         "UseSystemSearchPath" = "11:TRUE"
@@ -347,7 +357,7 @@
             "Target" = "8:_55280CA243A54012BF5324771A12ED50"
             "Folder" = "8:_A1C9257086B04CBBB63BE43FC8EE07EC"
             "WorkingFolder" = "8:_7989ECBF90334586867428108D8F935A"
-            "Icon" = "8:_2C85F696E6EA45BE9C8A37E63581C2D2"
+            "Icon" = "8:"
             "Feature" = "8:"
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_C7E14409361946A3BDB173C7146CCE49"
@@ -361,7 +371,7 @@
             "Target" = "8:_55280CA243A54012BF5324771A12ED50"
             "Folder" = "8:_7DAB78A0DF1345D49D6D37EA118FEF71"
             "WorkingFolder" = "8:_7989ECBF90334586867428108D8F935A"
-            "Icon" = "8:_2C85F696E6EA45BE9C8A37E63581C2D2"
+            "Icon" = "8:_D5702ED9F5DF49DCA5DB40E8811DCDF3"
             "Feature" = "8:"
             }
         }
@@ -801,7 +811,7 @@
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
             "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
+            "Hidden" = "11:TRUE"
             "System" = "11:FALSE"
             "Permanent" = "11:FALSE"
             "SharedLegacy" = "11:FALSE"

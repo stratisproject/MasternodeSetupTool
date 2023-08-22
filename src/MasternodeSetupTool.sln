@@ -18,6 +18,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{CB02F774-E7E4-4794-B171-73050F3C5ECB}"
 	ProjectSection(SolutionItems) = preProject
 		Resources\Logo.png = Resources\Logo.png
+		Resources\stratis.ico = Resources\stratis.ico
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.CirrusMinerD", "..\StratisFullNode\src\Stratis.CirrusMinerD\Stratis.CirrusMinerD.csproj", "{CEAEDDD8-675C-4683-89F6-A3500FA7CE69}"
