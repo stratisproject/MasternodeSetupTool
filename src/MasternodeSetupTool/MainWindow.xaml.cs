@@ -44,7 +44,13 @@ namespace MasternodeSetupTool
 
         private bool PrintStacktraces
         {
-            get { return true; }
+            get 
+            {
+                #if DEBUG
+                return true;
+                #endif
+                return false;
+            }
         }
 
         private Style FlatStyle
