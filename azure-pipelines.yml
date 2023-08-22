@@ -13,6 +13,8 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+  devCmd: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\devenv.com'
+  disableToolPath: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\VSI\DisableOutOfProcBuild'
 
 steps:
 - checkout: self
@@ -24,8 +26,18 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
-- task: VSBuild@1
+# - task: VSBuild@1
+#   inputs:
+#     solution: '$(solution)'
+#     platform: '$(buildPlatform)'
+#     configuration: '$(buildConfiguration)'
+
+# https://github.com/it3xl/MSBuild-DevEnv-Build-Server-Workarounds/issues/1#issuecomment-525435637
+- task: BatchScript@1
+  displayName: Enable .vdproj Builds
   inputs:
-    solution: '$(solution)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    filename: '"$(disableToolPath)\DisableOutOfProcBuild.exe"'
+    workingFolder: '"$(disableToolPath)"'
+
+- script: '"$(devCmd)" $(System.DefaultWorkingDirectory)\**.sln /Build "Release" /Project $(System.DefaultWorkingDirectory)\src\MasternodeSetupToolInstaller\MasternodeSetupToolInstaller.vdproj'
+  displayName: Build Installer
