@@ -21,8 +21,10 @@ steps:
   submodules: 'recursive'
 
 - task: NuGetToolInstaller@1
+  enabled: false
 
 - task: NuGetCommand@2
+  enabled: false
   inputs:
     restoreSolution: '$(solution)'
 
@@ -35,6 +37,7 @@ steps:
 # https://github.com/it3xl/MSBuild-DevEnv-Build-Server-Workarounds/issues/1#issuecomment-525435637
 - task: BatchScript@1
   displayName: Enable .vdproj Builds
+  enabled: false
   inputs:
     filename: '"$(disableToolPath)\DisableOutOfProcBuild.exe"'
     workingFolder: '"$(disableToolPath)"'
@@ -42,8 +45,10 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      # Write your commands here
+      cd $(System.DefaultWorkingDirectory)
+      echo `pwd`
       echo `ls -a`
 
 - script: '"$(devCmd)" $(System.DefaultWorkingDirectory)\src\MasternodeSetupTool.sln /Build "Release" /Project $(System.DefaultWorkingDirectory)\src\MasternodeSetupToolInstaller\MasternodeSetupToolInstaller.vdproj'
   displayName: Build Installer
+  enabled: false
