@@ -10,10 +10,10 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: '**/*MasternodeSetupTool.sln'
-  toolProject: '**/*MasternodeSetupTool.csproj'
-  minerProject: '$(System.DefaultWorkingDirectory)\StratisFullNode\src\Stratis.CirrusMinerD\Stratis.CirrusMinerD.csproj'
-  installerProject: '**/*MasternodeSetupToolInstaller.vdproj'
+  solution: '**/*.sln'
+  toolProjectPath: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupTool'
+  minerProjectPath: '$(System.DefaultWorkingDirectory)/StratisFullNode/src/Stratis.CirrusMinerD'
+  installerProject: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   devCmd: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\devenv.com'
@@ -26,21 +26,20 @@ steps:
 - task: NuGetToolInstaller@1
 
 - task: Bash@3
+  displayName: Build CirrusMinerD
   inputs:
     targetType: 'inline'
-    workingDirectory: $(System.DefaultWorkingDirectory)
     script: |
-      cd StratisFullNode/src/Stratis.CirrusMinerD
+      cd "$(minerProjectPath)"
       dotnet build
 
 - task: Bash@3
+  displayName: Build Masternode Setup Tool
   inputs:
     targetType: 'inline'
-    workingDirectory: $(System.DefaultWorkingDirectory)
     script: |
-      cd src/MasternodeSetupTool
+      cd "$(toolProjectPath)"
       dotnet build
-
 
 # - task: NuGetCommand@2
 #   inputs:
