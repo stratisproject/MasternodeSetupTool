@@ -12,7 +12,7 @@ pool:
 variables:
   solution: '**/*MasternodeSetupTool.sln'
   toolProject: '**/*MasternodeSetupTool.csproj'
-  minerProject: '**/*CirrusMinerD.csproj'
+  minerProject: '$(System.DefaultWorkingDirectory)\StratisFullNode\src\Stratis.CirrusMinerD\Stratis.CirrusMinerD.csproj'
   installerProject: '**/*MasternodeSetupToolInstaller.vdproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
