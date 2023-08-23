@@ -10,7 +10,10 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: '**/*.sln'
+  solution: '**/MasternodeSetupTool.sln'
+  toolProject: '**/MasternodeSetupTool.csproj'
+  minerProject: '**/Stratis.CirrusMinerD.csproj'
+  installerProject: '**/MasternodeSetupToolInstaller.vdproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   devCmd: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\devenv.com'
@@ -22,21 +25,31 @@ steps:
 
 - task: NuGetToolInstaller@1
 
-- task: NuGetCommand@2
-  enabled: false
-  inputs:
-    restoreSolution: '$(solution)'
-
-- task: NuGetCommand@2
-  inputs:
-    command: 'custom'
-    arguments: 'restore "$(solution)" -p:RestoreUseSkipNonexistentTargets=false'
-    
-# - task: VSBuild@1
+# - task: NuGetCommand@2
+#   enabled: false
 #   inputs:
-#     solution: '$(solution)'
-#     platform: '$(buildPlatform)'
-#     configuration: '$(buildConfiguration)'
+#     restoreSolution: '$(solution)'
+
+# - task: NuGetCommand@2
+#   inputs:
+#     command: 'custom'
+#     arguments: 'restore "$(solution)" -p:RestoreUseSkipNonexistentTargets=false'
+    
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+    msbuildArgs: '$(minerProject)'
+    restoreNugetPackages: true
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+    msbuildArgs: '$(toolProject)'
+    restoreNugetPackages: true
 
 # https://github.com/it3xl/MSBuild-DevEnv-Build-Server-Workarounds/issues/1#issuecomment-525435637
 - task: BatchScript@1
@@ -45,19 +58,5 @@ steps:
     filename: '"$(disableToolPath)\DisableOutOfProcBuild.exe"'
     workingFolder: '"$(disableToolPath)"'
 
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    script: |
-      # Write your commands here
-      
-      cd src
-      
-      echo `pwd`
-      echo "Files:"
-      echo `ls -a`
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-  enabled: false
-
-- script: '"$(devCmd)" "$(System.DefaultWorkingDirectory)\src\MasternodeSetupTool.sln" /Build "Release" /Project "$(System.DefaultWorkingDirectory)\src\MasternodeSetupToolInstaller\MasternodeSetupToolInstaller.vdproj"'
+- script: '"$(devCmd)" "$(solution)" /Build "$(buildConfiguration)" /Project "$(installerProject)"'
   displayName: Build Installer
