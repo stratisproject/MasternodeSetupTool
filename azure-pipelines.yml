@@ -12,7 +12,7 @@ pool:
 variables:
   solution: '**/MasternodeSetupTool.sln'
   toolProject: '**/MasternodeSetupTool.csproj'
-  minerProject: '**/Stratis.CirrusMinerD.csproj'
+  minerProject: '**/Stratis.CirrusMinerD/Stratis.CirrusMinerD.csproj'
   installerProject: '**/MasternodeSetupToolInstaller.vdproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
@@ -40,7 +40,7 @@ steps:
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-    msbuildArgs: '$(minerProject)'
+    msbuildArgs: '"$(minerProject)"'
     restoreNugetPackages: true
 
 - task: VSBuild@1
@@ -48,7 +48,7 @@ steps:
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-    msbuildArgs: '$(toolProject)'
+    msbuildArgs: '"$(toolProject)"'
     restoreNugetPackages: true
 
 # https://github.com/it3xl/MSBuild-DevEnv-Build-Server-Workarounds/issues/1#issuecomment-525435637
