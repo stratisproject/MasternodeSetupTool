@@ -25,9 +25,26 @@ steps:
 
 - task: NuGetToolInstaller@1
 
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    workingDirectory: $(System.DefaultWorkingDirectory)
+    script: |
+      cd StratisFullNode/src/Stratis.CirrusMinerD
+      dotnet build
+
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    workingDirectory: $(System.DefaultWorkingDirectory)
+    script: |
+      cd src/MasternodeSetupTool
+      dotnet build
+
+
 # - task: NuGetCommand@2
-#   enabled: false
 #   inputs:
+#    restoreDirectory: 
 #     restoreSolution: '$(solution)'
 
 # - task: NuGetCommand@2
@@ -35,13 +52,13 @@ steps:
 #     command: 'custom'
 #     arguments: 'restore "$(solution)" -p:RestoreUseSkipNonexistentTargets=false'
     
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-    # msbuildArgs: '"$(minerProject)"'
-    restoreNugetPackages: true
+# - task: VSBuild@1
+#   inputs:
+#     solution: '$(solution)'
+#     platform: '$(buildPlatform)'
+#     configuration: '$(buildConfiguration)'
+#     # msbuildArgs: '"$(minerProject)"'
+#     restoreNugetPackages: true
 
 # - task: VSBuild@1
 #   inputs:
@@ -50,7 +67,7 @@ steps:
 #     configuration: '$(buildConfiguration)'
 #     # msbuildArgs: '"$(toolProject)"'
 #     restoreNugetPackages: true
-
+ 
 # https://github.com/it3xl/MSBuild-DevEnv-Build-Server-Workarounds/issues/1#issuecomment-525435637
 - task: BatchScript@1
   displayName: Enable .vdproj Builds
