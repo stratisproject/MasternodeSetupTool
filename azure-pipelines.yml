@@ -13,7 +13,7 @@ variables:
   solution: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupTool.sln'
   toolProjectPath: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupTool'
   minerProjectPath: '$(System.DefaultWorkingDirectory)/StratisFullNode/src/Stratis.CirrusMinerD'
-  installerProjectPath: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj'
+  installerProjectPath: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupToolInstaller'
   installerProject: '$(installerProjectPath)/MasternodeSetupToolInstaller.vdproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
