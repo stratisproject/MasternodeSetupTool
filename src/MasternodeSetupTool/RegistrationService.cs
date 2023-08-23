@@ -541,19 +541,26 @@ namespace MasternodeSetupTool
 
             try
             {
-                await $"http://localhost:{this.sidechainNetwork.DefaultAPIPort}/api"
+                JoinFederationResponseModel response = await $"http://localhost:{this.sidechainNetwork.DefaultAPIPort}/api"
                     .AppendPathSegment("collateral/joinfederation")
-                    .PostJsonAsync(request).ConfigureAwait(false);
+                    .PostJsonAsync(request)
+                    .ReceiveJson<JoinFederationResponseModel>()
+                    .ConfigureAwait(false);
 
-                // TODO: Check the model response that came back
-                Status($"SUCCESS: The masternode request has now been submitted to the network");
-
-                return true;
+                if (response != null && !string.IsNullOrEmpty(response.MinerPublicKey)) 
+                {
+                    Status($"SUCCESS: The masternode request has now been submitted to the network");
+                    return true;
+                }
+                else
+                {
+                    Error($"ERROR: Cannot join federation. Please try again.");
+                    return false;
+                }
             }
             catch (Exception ex)
             {
                 Error($"ERROR: An exception occurred trying to register your masternode.", ex);
-
                 return false;
             }
         }
