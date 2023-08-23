@@ -13,7 +13,8 @@ variables:
   solution: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupTool.sln'
   toolProjectPath: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupTool'
   minerProjectPath: '$(System.DefaultWorkingDirectory)/StratisFullNode/src/Stratis.CirrusMinerD'
-  installerProject: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj'
+  installerProjectPath: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj'
+  installerProject: '$(installerProjectPath)/MasternodeSetupToolInstaller.vdproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   devCmd: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\devenv.com'
@@ -40,32 +41,6 @@ steps:
     script: |
       cd "$(toolProjectPath)"
       dotnet build
-
-# - task: NuGetCommand@2
-#   inputs:
-#    restoreDirectory: 
-#     restoreSolution: '$(solution)'
-
-# - task: NuGetCommand@2
-#   inputs:
-#     command: 'custom'
-#     arguments: 'restore "$(solution)" -p:RestoreUseSkipNonexistentTargets=false'
-    
-# - task: VSBuild@1
-#   inputs:
-#     solution: '$(solution)'
-#     platform: '$(buildPlatform)'
-#     configuration: '$(buildConfiguration)'
-#     # msbuildArgs: '"$(minerProject)"'
-#     restoreNugetPackages: true
-
-# - task: VSBuild@1
-#   inputs:
-#     solution: '$(solution)'
-#     platform: '$(buildPlatform)'
-#     configuration: '$(buildConfiguration)'
-#     # msbuildArgs: '"$(toolProject)"'
-#     restoreNugetPackages: true
  
 # https://github.com/it3xl/MSBuild-DevEnv-Build-Server-Workarounds/issues/1#issuecomment-525435637
 - task: BatchScript@1
@@ -76,3 +51,9 @@ steps:
 
 - script: '"$(devCmd)" "$(solution)" /Build "$(buildConfiguration)" /Project "$(installerProject)"'
   displayName: Build Installer
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(installerProjectPath)/$(buildConfiguration)/'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
