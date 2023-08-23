@@ -10,10 +10,10 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: '**/MasternodeSetupTool.sln'
-  toolProject: '**/MasternodeSetupTool.csproj'
-  minerProject: '**/Stratis.CirrusMinerD/Stratis.CirrusMinerD.csproj'
-  installerProject: '**/MasternodeSetupToolInstaller.vdproj'
+  solution: '**/*MasternodeSetupTool.sln'
+  toolProject: '**/*MasternodeSetupTool.csproj'
+  minerProject: '**/*Stratis.CirrusMinerD/Stratis.CirrusMinerD.csproj'
+  installerProject: '**/*MasternodeSetupToolInstaller.vdproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   devCmd: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\devenv.com'
