@@ -40,16 +40,16 @@ steps:
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-    msbuildArgs: '"$(minerProject)"'
+    # msbuildArgs: '"$(minerProject)"'
     restoreNugetPackages: true
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-    msbuildArgs: '"$(toolProject)"'
-    restoreNugetPackages: true
+# - task: VSBuild@1
+#   inputs:
+#     solution: '$(solution)'
+#     platform: '$(buildPlatform)'
+#     configuration: '$(buildConfiguration)'
+#     # msbuildArgs: '"$(toolProject)"'
+#     restoreNugetPackages: true
 
 # https://github.com/it3xl/MSBuild-DevEnv-Build-Server-Workarounds/issues/1#issuecomment-525435637
 - task: BatchScript@1
