@@ -29,7 +29,7 @@ namespace MasternodeSetupTool
     {
         public const int CollateralRequirement = 100_000;
         public const int FeeRequirement = 500;
-        public const int DashboardPort = 37000;
+        public const int DashboardPort = 5000;
 
         private NetworkType networkType;
         private Network mainchainNetwork;
@@ -582,19 +582,8 @@ namespace MasternodeSetupTool
         public async Task<bool> StartMasterNodeDashboardAsync()
         {
             var argumentBuilder = new StringBuilder();
-            var isWindows = IsRunningOnWindows();
 
-            if (isWindows)
-            {
-                argumentBuilder.Append("dotnet.exe ");
-            }
-            else
-            {
-                argumentBuilder.Append("dotnet ");
-            }
-
-            argumentBuilder.Append("run ");
-            argumentBuilder.Append("-c Release ");
+            argumentBuilder.Append("Stratis.FederatedSidechains.AdminDashboard.exe ");
             argumentBuilder.Append("--nodetype 10K ");
             argumentBuilder.Append($"--mainchainport {this.MainchainNetwork.DefaultAPIPort} ");
             argumentBuilder.Append($"--sidechainport {this.SidechainNetwork.DefaultAPIPort} ");
@@ -618,27 +607,16 @@ namespace MasternodeSetupTool
             }
 
             Status($"Starting the masternode dashboard on {this.networkType}. Start up arguments: {argumentBuilder}");
+            
+            string osSpecificCommand = "CMD.EXE";
+            string osSpecificArguments = $"/K \"{argumentBuilder}\"";
 
-            string osSpecificCommand = "";
-            string osSpecificArguments = "";
-            if (isWindows)
-            {
-                osSpecificCommand = "CMD.EXE";
-                osSpecificArguments = $"/K \"{argumentBuilder}\"";
-            }
-            else
-            {
-                osSpecificCommand = "/bin/bash";
-                osSpecificArguments = $"-c \"{argumentBuilder}\"";
-            }
-
-            //TODO: clone or choose
             var startInfo = new ProcessStartInfo
             {
                 Arguments = osSpecificArguments,
                 FileName = osSpecificCommand,
                 UseShellExecute = true,
-                WorkingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\", "Stratis.CirrusMinerD"))
+                WorkingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Dashboard"))
             };
 
             var process = Process.Start(startInfo);

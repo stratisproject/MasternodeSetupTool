@@ -21,6 +21,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_19734C3E6CF947C38E78165D579C2FDD"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_55280CA243A54012BF5324771A12ED50"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -174,6 +180,17 @@
             "Property" = "8:TARGETDIR"
                 "Folders"
                 {
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_2F737805869243F8A56A492C9538A8DC"
+                    {
+                    "Name" = "8:Dashboard"
+                    "AlwaysCreate" = "11:FALSE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_55AC84A8CBA54854AC9EA170C5F38336"
+                        "Folders"
+                        {
+                        }
+                    }
                     "{9EF0B969-E518-4E46-987F-47570745A589}:_502AC3F8581144D8968616FA2BEBE000"
                     {
                     "Name" = "8:CirrusMinerD"
@@ -357,7 +374,7 @@
             "Target" = "8:_55280CA243A54012BF5324771A12ED50"
             "Folder" = "8:_A1C9257086B04CBBB63BE43FC8EE07EC"
             "WorkingFolder" = "8:_7989ECBF90334586867428108D8F935A"
-            "Icon" = "8:"
+            "Icon" = "8:_D5702ED9F5DF49DCA5DB40E8811DCDF3"
             "Feature" = "8:"
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_C7E14409361946A3BDB173C7146CCE49"
@@ -371,6 +388,20 @@
             "Target" = "8:_55280CA243A54012BF5324771A12ED50"
             "Folder" = "8:_7DAB78A0DF1345D49D6D37EA118FEF71"
             "WorkingFolder" = "8:_7989ECBF90334586867428108D8F935A"
+            "Icon" = "8:_D5702ED9F5DF49DCA5DB40E8811DCDF3"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_E31BF49C38A442FD9254B4ADFCF37315"
+            {
+            "Name" = "8:Masternode Admin Dashboard"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_19734C3E6CF947C38E78165D579C2FDD"
+            "Folder" = "8:_A1C9257086B04CBBB63BE43FC8EE07EC"
+            "WorkingFolder" = "8:_2F737805869243F8A56A492C9538A8DC"
             "Icon" = "8:_D5702ED9F5DF49DCA5DB40E8811DCDF3"
             "Feature" = "8:"
             }
@@ -796,6 +827,34 @@
             "OutputConfiguration" = "8:"
             "OutputGroupCanonicalName" = "8:PublishItems"
             "OutputProjectGuid" = "8:{CEAEDDD8-675C-4683-89F6-A3500FA7CE69}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_19734C3E6CF947C38E78165D579C2FDD"
+            {
+            "SourcePath" = "8:..\\..\\StratisMasternodeDashboard\\src\\StratisMasternodeDashboard\\obj\\Debug\\netcoreapp3.1\\apphost.exe"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_2F737805869243F8A56A492C9538A8DC"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:PublishItems"
+            "OutputProjectGuid" = "8:{31ECC5D0-F4E8-4C5B-A1C9-3A503BAAD0A8}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {
