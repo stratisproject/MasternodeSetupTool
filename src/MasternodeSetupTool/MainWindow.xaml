@@ -28,7 +28,9 @@
                 ScrollViewer.HorizontalScrollBarVisibility="Visible"
                 ScrollViewer.VerticalScrollBarVisibility="Visible"
                 ScrollViewer.CanContentScroll="True" 
-                Name="txtStatusBar" Text="" />
+                Name="txtStatusBar" Text=""
+                TextWrapping="WrapWithOverflow"
+                Margin="10"/>
         </ScrollViewer>
 
         <StackPanel Grid.Column="1" Grid.Row="1" Name="Main" Orientation="Horizontal" HorizontalAlignment="Center" />

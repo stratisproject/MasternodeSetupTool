@@ -30,17 +30,17 @@ namespace MasternodeSetupTool
         private string? nextState = null;
 
         private bool createdButtons;
-        private string mnemonic;
-        private string passphrase;
+        private string? mnemonic;
+        private string? passphrase;
 
-        private string collateralWalletPassword;
-        private string miningWalletPassword;
+        private string? collateralWalletPassword;
+        private string? miningWalletPassword;
 
-        private string collateralWalletName;
-        private string miningWalletName;
+        private string? collateralWalletName;
+        private string? miningWalletName;
 
-        private string collateralAddress;
-        private string cirrusAddress;
+        private string? collateralAddress;
+        private string? cirrusAddress;
 
         private bool PrintStacktraces
         {
@@ -48,8 +48,10 @@ namespace MasternodeSetupTool
             {
                 #if DEBUG
                 return true;
-                #endif
+#endif
+#pragma warning disable CS0162 // Unreachable code detected
                 return false;
+#pragma warning restore CS0162 // Unreachable code detected
             }
         }
 
@@ -108,7 +110,7 @@ namespace MasternodeSetupTool
                         Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
                     };
 
-                    button.Click += new RoutedEventHandler(Button_ClickAsync);
+                    button.Click += new RoutedEventHandler(Button_Click);
                     this.stackPanel.Children.Add(button);
 
                     button = new Button
@@ -120,7 +122,7 @@ namespace MasternodeSetupTool
                         Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
                     };
 
-                    button.Click += new RoutedEventHandler(Button_ClickAsync);
+                    button.Click += new RoutedEventHandler(Button_Click);
 
                     this.stackPanel.Children.Add(button);
                 }
@@ -136,14 +138,14 @@ namespace MasternodeSetupTool
             this.currentState = this.nextState;
             this.nextState = null;
 
-            if (await RunBranch())
+            if (await RunBranchAsync())
             {
                 this.timer.IsEnabled = true;
 
                 return;
             }
 
-            if (await SetupBranch())
+            if (await SetupBranchAsync())
             {
                 this.timer.IsEnabled = true;
 
@@ -153,7 +155,7 @@ namespace MasternodeSetupTool
             this.timer.IsEnabled = true;
         }
 
-        private async Task<bool> RunBranch()
+        private async Task<bool> RunBranchAsync()
         {
             // The 'Run' branch
 
@@ -206,7 +208,7 @@ namespace MasternodeSetupTool
             if (this.currentState == "Run_LaunchBrowser")
             {
                 await this.registrationService.StartMasterNodeDashboardAsync().ConfigureAwait(false);
-                await this.registrationService.LaunchBrowserAsync($"http://localhost:{RegistrationService.DashboardPort}").ConfigureAwait(false);
+                this.registrationService.LaunchBrowser($"http://localhost:{RegistrationService.DashboardPort}");
 
                 ResetState();
 
@@ -216,7 +218,7 @@ namespace MasternodeSetupTool
             return false;
         }
 
-        private async Task<bool> SetupBranch()
+        private async Task<bool> SetupBranchAsync()
         {
             if (this.currentState == "SetupMasterNode_Eula")
             {
@@ -574,9 +576,9 @@ namespace MasternodeSetupTool
             return false;
         }
 
-        private async void Button_ClickAsync(object sender, RoutedEventArgs e)
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
-            Button button = sender as Button;
+            Button button = (Button)sender;
 
             if (button == null)
             {

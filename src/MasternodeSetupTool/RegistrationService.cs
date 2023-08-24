@@ -91,22 +91,22 @@ namespace MasternodeSetupTool
 
         private void Status(string message)
         {
-            logger.Info(message);
+            this.logger.Info(message);
         }
 
         private void Error(string message)
         {
-            logger.Error(message);
+            this.logger.Error(message);
         }
 
         private void Error(Exception exception)
         {
-            logger.Error(exception);
+            this.logger.Error(exception);
         }
 
         private void Error(string message, Exception exception)
         {
-            logger.Error(message, exception);
+            this.logger.Error(message, exception);
         }
 
         public async Task<bool> StartNodeAsync(NodeType nodeType)
@@ -134,7 +134,7 @@ namespace MasternodeSetupTool
             if (this.networkType == NetworkType.Regtest)
                 argumentBuilder.Append("-regtest ");
 
-            Status($"Starting the {nodeType} node on {networkType}. Start up arguments: {argumentBuilder}");
+            Status($"Starting the {nodeType} node on {this.networkType}. Start up arguments: {argumentBuilder}");
 
             string osSpecificCommand = "CMD.EXE";
             string osSpecificArguments = $"/K \"{argumentBuilder}\"";
@@ -278,7 +278,7 @@ namespace MasternodeSetupTool
             return false;
         }
 
-        public async Task<string> GetFirstWalletAddressAsync(int apiPort, string walletName)
+        public async Task<string?> GetFirstWalletAddressAsync(int apiPort, string walletName)
         {
             try
             {
@@ -489,9 +489,9 @@ namespace MasternodeSetupTool
         }
 
         public async Task<WalletBuildTransactionModel> BuildTransactionAsync(int apiPort, string walletName, string walletPassword, string accountName, List<RecipientModel> recipients,
-            string opReturnData = null, string opReturnAmount = null, string feeType = "low", string changeAddress = null, bool allowUnconfirmed = false)
+            string? opReturnData = null, string? opReturnAmount = null, string feeType = "low", string? changeAddress = null, bool allowUnconfirmed = false)
         {
-            var result = $"http://localhost:{apiPort}/api"
+            var result = await $"http://localhost:{apiPort}/api"
                 .AppendPathSegment("wallet/build-transaction")
                 .PostJsonAsync(new BuildTransactionRequest
                 {
@@ -507,7 +507,8 @@ namespace MasternodeSetupTool
                     SegwitChangeAddress = false,
                     ChangeAddress = changeAddress
                 })
-                .ReceiveBytes().GetAwaiter().GetResult();
+                .ReceiveBytes()
+                .ConfigureAwait(false);
 
             WalletBuildTransactionModel buildTransactionModel = JsonConvert.DeserializeObject<WalletBuildTransactionModel>(Encoding.ASCII.GetString(result));
 
@@ -604,13 +605,15 @@ namespace MasternodeSetupTool
             if (this.networkType == NetworkType.Testnet)
             {
                 argumentBuilder.Append("--env testnet ");
-                argumentBuilder.Append("--sdadaocontractaddress CbtYboKjnk7rhNbEFzn94UZikde36h6TCb "); // TODO: Replace with correct address
+                // TODO: Replace with correct address
+                //argumentBuilder.Append("--sdadaocontractaddress CbtYboKjnk7rhNbEFzn94UZikde36h6TCb "); 
             }
 
             if (this.networkType == NetworkType.Regtest)
             {
                 argumentBuilder.Append("--env regtest ");
-                argumentBuilder.Append("--sdadaocontractaddress CbtYboKjnk7rhNbEFzn94UZikde36h6TCb "); // TODO: Replace with correct address
+                // TODO: Replace with correct address
+                //argumentBuilder.Append("--sdadaocontractaddress CbtYboKjnk7rhNbEFzn94UZikde36h6TCb "); 
             }
 
             Status($"Starting the masternode dashboard on {this.networkType}. Start up arguments: {argumentBuilder}");
@@ -629,7 +632,7 @@ namespace MasternodeSetupTool
             var process = Process.Start(startInfo);
             await Task.Delay(TimeSpan.FromSeconds(5));
 
-            if (process.HasExited)
+            if (process == null || process.HasExited)
             {
                 Error($"Masternode dashboard process failed to start, exiting...");
                 return false;
@@ -640,7 +643,7 @@ namespace MasternodeSetupTool
             return true;
         }
 
-        public async Task LaunchBrowserAsync(string url)
+        public void LaunchBrowser(string url)
         {
             Process.Start("explorer", url);
         }
