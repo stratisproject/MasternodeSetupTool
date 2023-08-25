@@ -89,7 +89,7 @@ namespace MasternodeSetupTool
             get { return this.pubKey; }
         }
 
-        private void Status(string message)
+        private void Status(string message, string? updateTag = null)
         {
             this.logger.Info(message);
         }
@@ -236,9 +236,11 @@ namespace MasternodeSetupTool
             return result;
         }
 
-        private async Task<bool> EnsureMainChainNodeAddressIndexerIsSyncedAsync()
+        public async Task<bool> EnsureMainChainNodeAddressIndexerIsSyncedAsync()
         {
-            Status("Waiting for the main chain node to sync it's address indexer...");
+            const string logTag = "MainChainNodeAddressIndexerStatus";
+
+            Status("Waiting for the main chain node to sync it's address indexer...", updateTag: logTag);
 
             bool result;
 
@@ -246,14 +248,27 @@ namespace MasternodeSetupTool
             {
                 StatusModel blockModel = await $"http://localhost:{this.mainchainNetwork.DefaultAPIPort}/api".AppendPathSegment("node/status").GetJsonAsync<StatusModel>();
                 AddressIndexerTipModel addressIndexerModel = await $"http://localhost:{this.mainchainNetwork.DefaultAPIPort}/api".AppendPathSegment("blockstore/addressindexertip").GetJsonAsync<AddressIndexerTipModel>();
-                if (addressIndexerModel.TipHeight > (blockModel.ConsensusHeight - 50))
+
+                if (blockModel.ConsensusHeight != null)
                 {
-                    Status($"Main chain address indexer synced.");
-                    result = true;
-                    break;
+                    int targetHeight = (int)(blockModel.ConsensusHeight - 50);
+
+                    if (addressIndexerModel.TipHeight > targetHeight)
+                    {
+                        Status($"Main chain address indexer synced.", updateTag: logTag);
+                        result = true;
+                        break;
+                    } 
+                    else
+                    {
+                        int height = addressIndexerModel.TipHeight ?? 0;
+                        int progress = Math.Clamp((int)(100.0 * height / targetHeight), 0, 100);
+                        Status($"Main chain node address indexer is syncing, progress: {progress}%, current height: {addressIndexerModel.TipHeight}...", updateTag: logTag);
+                        await Task.Delay(TimeSpan.FromSeconds(3));
+                    }
                 }
 
-                Status($"Main chain node address indexer is syncing, current height {addressIndexerModel.TipHeight}...");
+                Status($"Main chain node address indexer is syncing, current height {addressIndexerModel.TipHeight}...", updateTag: logTag);
                 await Task.Delay(TimeSpan.FromSeconds(3));
             } while (true);
 
@@ -330,9 +345,9 @@ namespace MasternodeSetupTool
             return false;
         }
 
-        public async Task<bool> RestoreWalletAsync(int apiPort, string chainName, string walletName, string mnemonic, string passphrase, string password)
+        public async Task<bool> RestoreWalletAsync(int apiPort, NodeType nodeType, string walletName, string mnemonic, string passphrase, string password)
         {
-            Status($"You have chosen to restore your {chainName} wallet.");
+            Status($"You have chosen to restore your {nodeType} wallet.");
 
             var walletRecoveryRequest = new WalletRecoveryRequest()
             {
@@ -351,7 +366,7 @@ namespace MasternodeSetupTool
             }
             catch (Exception ex)
             {
-                Error($"ERROR: An exception occurred trying to recover your {chainName} wallet.", ex);
+                Error($"ERROR: An exception occurred trying to recover your {nodeType} wallet.", ex);
                 return false;
             }
 
@@ -361,11 +376,11 @@ namespace MasternodeSetupTool
 
             if (walletInfoModel.WalletNames.Contains(walletName))
             {
-                Status($"SUCCESS: {chainName} wallet has been restored.");
+                Status($"SUCCESS: {nodeType} wallet has been restored.");
             }
             else
             {
-                Error($"ERROR: {chainName} wallet failed to be restored, exiting the registration process.");
+                Error($"ERROR: {nodeType} wallet failed to be restored, exiting the registration process.");
                 return false;
             }
 

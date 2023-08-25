@@ -184,7 +184,7 @@ namespace MasternodeSetupTool
             {
                 await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(false);
 
-                await this.registrationService.EnsureNodeIsSyncedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(false);
+                await this.registrationService.EnsureMainChainNodeAddressIndexerIsSyncedAsync().ConfigureAwait(false);
 
                 this.nextState = "Run_StartSideChain";
             }
@@ -296,7 +296,7 @@ namespace MasternodeSetupTool
             {
                 await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(false);
 
-                await this.registrationService.EnsureNodeIsSyncedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(false);
+                await this.registrationService.EnsureMainChainNodeAddressIndexerIsSyncedAsync().ConfigureAwait(false);
 
                 this.nextState = "Setup_CreateRestoreUseExisting_StartSideChain";
             }
@@ -392,7 +392,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_CreateCollateralWallet")
             {
-                await this.registrationService.RestoreWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, "", this.collateralWalletName, this.mnemonic, this.passphrase, this.collateralWalletPassword).ConfigureAwait(false);
+                await this.registrationService.RestoreWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, NodeType.MainChain, this.collateralWalletName, this.mnemonic, this.passphrase, this.collateralWalletPassword).ConfigureAwait(false);
                 await this.registrationService.ResyncWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false);
 
                 this.nextState = "Setup_CreateRestoreUseExisting_Create_SyncCollateralWallet";
@@ -401,7 +401,7 @@ namespace MasternodeSetupTool
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_SyncCollateralWallet")
             {
                 int percentSynced = await this.registrationService.WalletSyncProgressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false);
-                this.statusBar.Text = $"Main chain collateral wallet {percentSynced}% synced";
+                Log($"Main chain collateral wallet {percentSynced}% synced", updateTag: this.currentState);
 
                 if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false))
                     this.nextState = "Setup_CreateRestoreUseExisting_Create_CreateMiningWallet";
@@ -409,7 +409,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_CreateMiningWallet")
             {
-                await this.registrationService.RestoreWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, "", this.miningWalletName, this.mnemonic, this.passphrase, this.miningWalletPassword).ConfigureAwait(false);
+                await this.registrationService.RestoreWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, NodeType.SideChain, this.miningWalletName, this.mnemonic, this.passphrase, this.miningWalletPassword).ConfigureAwait(false);
                 await this.registrationService.ResyncWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false);
 
                 this.nextState = "Setup_CreateRestoreUseExisting_Create_SyncMiningWallet";
@@ -418,7 +418,7 @@ namespace MasternodeSetupTool
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_SyncMiningWallet")
             {
                 int percentSynced = await this.registrationService.WalletSyncProgressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false);
-                this.statusBar.Text = $"Side chain mining wallet {percentSynced}% synced";
+                Log($"Side chain mining wallet {percentSynced}% synced", updateTag: this.currentState);
 
                 if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false))
                     this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
@@ -439,7 +439,7 @@ namespace MasternodeSetupTool
                 if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, RegistrationService.CollateralRequirement).ConfigureAwait(false))
                     this.nextState = "Setup_CreateRestoreUseExisting_CheckForRegistrationFee";
                 else
-                    this.statusBar.Text = $"Waiting for collateral wallet to have a balance of at least {RegistrationService.CollateralRequirement} STRAX";
+                    Log($"Waiting for collateral wallet to have a balance of at least {RegistrationService.CollateralRequirement} STRAX", updateTag: this.currentState);
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_CheckForRegistrationFee")
@@ -469,7 +469,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer")
             {
-                this.statusBar.Text = "Waiting for registration fee to be sent via cross-chain transfer...";
+                Log("Waiting for registration fee to be sent via cross-chain transfer...", updateTag: this.currentState);
 
                 if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(false))
                 {
@@ -488,7 +488,7 @@ namespace MasternodeSetupTool
             {
                 if (await this.registrationService.MonitorJoinFederationRequestAsync().ConfigureAwait(false))
                 {
-                    this.statusBar.Text = "Registration complete";
+                    Log("Registration complete");
                     this.nextState = "Run_LaunchBrowser";
                 }
             }
@@ -559,7 +559,7 @@ namespace MasternodeSetupTool
                     this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_CheckSideWalletSynced";
                 }
 
-                this.statusBar.Text = "Waiting for mainchain wallet to sync...";
+                Log("Waiting for mainchain wallet to sync...", updateTag: this.currentState);
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_CheckSideWalletSynced")
@@ -570,7 +570,7 @@ namespace MasternodeSetupTool
                     this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
                 }
 
-                this.statusBar.Text = "Waiting for sidechain wallet to sync...";
+                Log("Waiting for sidechain wallet to sync...", updateTag: this.currentState);
             }
 
             return false;
@@ -608,23 +608,33 @@ namespace MasternodeSetupTool
             this.currentState = "Begin";
         }
 
-        private void Log(string message, Color color)
+        private void Log(string message, Brush? brush = null, string? updateTag = null)
         {
             var inline = new Run(message + "\n");
-            inline.Foreground = new SolidColorBrush(color);
+            inline.Tag = updateTag;
+
+            if (brush != null)
+            {
+                inline.Foreground = brush;
+            }
 
             Application.Current.Dispatcher.Invoke(() =>
             {
-                this.statusBar.Inlines.Add(inline);
+                InlineCollection inlines = this.statusBar.Inlines;
+                Inline lastInline = inlines.LastInline;
+
+                if (updateTag != null && lastInline != null && string.Equals(lastInline.Tag, updateTag)) 
+                {
+                    inlines.Remove(lastInline);
+                }
+
+                inlines.Add(inline);
             });
         }
 
-        private void Log(string message)
+        private void Log(string message, Color color, string? updateTag = null)
         {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                this.statusBar.Text += message + "\n";
-            });
+            Log(message, new SolidColorBrush(color), updateTag);
         }
 
         private void LogError(string message)
@@ -632,9 +642,9 @@ namespace MasternodeSetupTool
             Log(message, Color.FromRgb(255, 51, 51));
         }
 
-        public void Info(string message)
+        public void Info(string message, string? updateTag = null)
         {
-            Log(message);
+            Log(message, updateTag: updateTag);
         }
 
         public void Error(string message)
