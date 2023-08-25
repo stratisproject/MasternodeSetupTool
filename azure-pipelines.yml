@@ -54,7 +54,7 @@ steps:
 
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '**/*.msi'
+    rootFolderOrFile: '$(installerProject)/$(buildConfiguration)'
     includeRootFolder: true
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/MasternodeSetupTool-$(Build.BuildId).zip'
