@@ -2,7 +2,7 @@
 
 ## Dependencies
 
-This repository depends on two project:
+This repository depends on two projects:
 - https://github.com/stratisproject/StratisFullNode.git
 - https://github.com/stratisproject/StratisMasternodeDashboard
 
