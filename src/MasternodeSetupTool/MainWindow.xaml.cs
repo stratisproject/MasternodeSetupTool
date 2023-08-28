@@ -349,7 +349,7 @@ namespace MasternodeSetupTool
                 var temp = new Mnemonic("English", WordCount.Twelve);
                 this.mnemonic = string.Join(' ', temp.Words);
 
-                var dialog = new ConfirmationDialog("Mnemonic", this.mnemonic, false);
+                var dialog = new ConfirmationDialog("Enter mnemonic", "Mnemonic", this.mnemonic, false);
                 dialog.ShowDialog();
 
                 this.nextState = "Setup_CreateRestoreUseExisting_Create_Passphrase";
@@ -357,10 +357,10 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_Passphrase")
             {
-                var dialog = new ConfirmationDialog("Passphrase", "", true);
+                var dialog = new ConfirmationDialog("Enter passphrase", "Passphrase", "", true, allowEmpty: true);
                 dialog.ShowDialog();
 
-                this.passphrase = dialog.Text2.Text;
+                this.passphrase = dialog.Text2.Text ?? "";
 
                 this.nextState = "Setup_CreateRestoreUseExisting_Create_CollateralPassword";
             }
@@ -368,7 +368,7 @@ namespace MasternodeSetupTool
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_CollateralPassword")
             {
                 // TODO: add loop for password request
-                var dialog = new ConfirmationDialog("Collateral Wallet Password (Mainchain)", "", true);
+                var dialog = new ConfirmationDialog("Enter collateral wallet password (Mainchain)", "Password", "", true);
                 dialog.ShowDialog();
 
                 this.collateralWalletPassword = dialog.Text2.Text;
@@ -380,7 +380,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_MiningPassword")
             {
-                var dialog = new ConfirmationDialog("Mining Wallet Password (Sidechain)", "", true);
+                var dialog = new ConfirmationDialog("Enter mining wallet password (Sidechain)", "Password", "", true);
                 dialog.ShowDialog();
 
                 this.miningWalletPassword = dialog.Text2.Text;
@@ -392,8 +392,20 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_CreateCollateralWallet")
             {
-                await this.registrationService.RestoreWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, NodeType.MainChain, this.collateralWalletName, this.mnemonic, this.passphrase, this.collateralWalletPassword).ConfigureAwait(false);
-                await this.registrationService.ResyncWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false);
+                //TODO: ask for a new wallet name if default one is present already
+                if (!await this.registrationService.RestoreWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, NodeType.MainChain, this.collateralWalletName, this.mnemonic, this.passphrase, this.collateralWalletPassword).ConfigureAwait(false))
+                {
+                    LogError("Cannot restore collateral wallet, aborting...");
+                    ResetState();
+                    return true;
+                }
+
+                if (!await this.registrationService.ResyncWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false))
+                {
+                    LogError("Cannot resync collateral wallet, aborting...");
+                    ResetState();
+                    return true;
+                }
 
                 this.nextState = "Setup_CreateRestoreUseExisting_Create_SyncCollateralWallet";
             }
@@ -409,8 +421,19 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_CreateMiningWallet")
             {
-                await this.registrationService.RestoreWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, NodeType.SideChain, this.miningWalletName, this.mnemonic, this.passphrase, this.miningWalletPassword).ConfigureAwait(false);
-                await this.registrationService.ResyncWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false);
+                if (!await this.registrationService.RestoreWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, NodeType.SideChain, this.miningWalletName, this.mnemonic, this.passphrase, this.miningWalletPassword).ConfigureAwait(false))
+                {
+                    LogError("Cannot restore mining wallet, aborting...");
+                    ResetState();
+                    return true;
+                }
+
+                if (!await this.registrationService.ResyncWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false))
+                {
+                    LogError("Cannot resync mining wallet, aborting...");
+                    ResetState();
+                    return true;
+                }
 
                 this.nextState = "Setup_CreateRestoreUseExisting_Create_SyncMiningWallet";
             }
@@ -610,16 +633,16 @@ namespace MasternodeSetupTool
 
         private void Log(string message, Brush? brush = null, string? updateTag = null)
         {
-            var inline = new Run(message + "\n");
-            inline.Tag = updateTag;
-
-            if (brush != null)
+            this.statusBar.Dispatcher.Invoke(() =>
             {
-                inline.Foreground = brush;
-            }
+                var inline = new Run(message + "\n");
+                inline.Tag = updateTag;
 
-            Application.Current.Dispatcher.Invoke(() =>
-            {
+                if (brush != null)
+                {
+                    inline.Foreground = brush;
+                }
+
                 InlineCollection inlines = this.statusBar.Inlines;
                 Inline lastInline = inlines.LastInline;
 

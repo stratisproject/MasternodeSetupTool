@@ -144,6 +144,7 @@ namespace MasternodeSetupTool
                 Arguments = osSpecificArguments,
                 FileName = osSpecificCommand,
                 UseShellExecute = true,
+                WindowStyle = ProcessWindowStyle.Minimized,
                 WorkingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CirrusMinerD"))
             };
 
@@ -214,7 +215,9 @@ namespace MasternodeSetupTool
 
         public async Task<bool> EnsureNodeIsSyncedAsync(NodeType nodeType, int apiPort)
         {
-            Status($"Waiting for the {nodeType} node to sync with the network...");
+            string logTag = Guid.NewGuid().ToString();
+
+            Status($"Waiting for the {nodeType} node to sync with the network...", updateTag: logTag);
 
             bool result;
 
@@ -224,12 +227,12 @@ namespace MasternodeSetupTool
                 StatusModel blockModel = await $"http://localhost:{apiPort}/api".AppendPathSegment("node/status").GetJsonAsync<StatusModel>();
                 if (blockModel.InIbd.HasValue && !blockModel.InIbd.Value)
                 {
-                    Status($"{nodeType} node is synced at height {blockModel.ConsensusHeight}.");
+                    Status($"{nodeType} node is synced at height {blockModel.ConsensusHeight}.", updateTag: logTag);
                     result = true;
                     break;
                 }
 
-                Status($"{nodeType} node syncing, current height {blockModel.ConsensusHeight}...");
+                Status($"{nodeType} node syncing, current height {blockModel.ConsensusHeight}...", updateTag: logTag);
                 await Task.Delay(TimeSpan.FromSeconds(3));
             } while (true);
 
@@ -351,7 +354,7 @@ namespace MasternodeSetupTool
 
             var walletRecoveryRequest = new WalletRecoveryRequest()
             {
-                CreationDate = new DateTime(2020, 11, 1),
+                CreationDate = new DateTime(),
                 Mnemonic = mnemonic,
                 Name = walletName,
                 Passphrase = passphrase,

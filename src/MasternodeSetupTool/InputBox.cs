@@ -32,11 +32,12 @@ namespace MasternodeSetupTool
 
             var ok = new Button
             {
-                Width = 70,
+                Width = 120,
                 Height = 30,
-                Content = "Ok",
+                Content = "OK",
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(2)
+                Margin = new Thickness(2),
+                IsDefault = true,
             };
 
             ok.Click += Ok_Click;
@@ -67,6 +68,7 @@ namespace MasternodeSetupTool
 
         public string? ShowDialog()
         {
+            this.input.Focus();
             this.box.ShowDialog();
 
             if (this.box.DialogResult != true) 

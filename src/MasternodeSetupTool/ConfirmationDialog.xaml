@@ -4,13 +4,62 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Confirm" Height="229" Width="800">
+        Title="Confirm" Height="240" Width="480">
     <Grid>
-        <Label x:Name="Label1" Content="Label" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="Text1" HorizontalAlignment="Left" Margin="90,14,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="615"/>
-        <Label Content="Confirm" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="Text2" HorizontalAlignment="Left" Margin="90,45,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="615"/>
-        <Button Content="Ok" HorizontalAlignment="Left" Margin="378,107,0,0" VerticalAlignment="Top" Click="Button_Click"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        
+        <Label 
+            x:Name="Label1" 
+            Content="Label" 
+            Grid.Column="0"
+            Grid.Row="0"
+            Margin="10"
+            HorizontalAlignment="Center"/>
+        
+        <TextBox 
+            x:Name="Text1" 
+            TextWrapping="Wrap" 
+            Text="" 
+            Grid.Column="1"
+            Grid.Row="0"
+            TextAlignment="Left"
+            Margin="10"/>
+        
+        <Label 
+            Content="Confirm" 
+            Grid.Column="0" 
+            Grid.Row="1"
+            Margin="10"
+            HorizontalAlignment="Center"/>
+        
+        <TextBox 
+            x:Name="Text2" 
+            TextWrapping="Wrap" 
+            Text="" 
+            Grid.Column="1" 
+            Grid.Row="1"
+            TextAlignment="Left"
+            Margin="10" />
+        
+        <Button 
+            Content="Ok" 
+            Click="Button_Click" 
+            Padding="8, 4, 8, 4" 
+            Grid.ColumnSpan="2"
+            Grid.Row="2"
+            HorizontalAlignment="Center" 
+            VerticalAlignment="Bottom"
+            Margin="20"
+            IsDefault="True"/>
 
     </Grid>
 </Window>
