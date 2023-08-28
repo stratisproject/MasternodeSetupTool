@@ -555,7 +555,7 @@ namespace MasternodeSetupTool
 
                     this.collateralWalletName = inputBox.ShowDialog();
 
-                    if (!string.IsNullOrEmpty(this.mnemonic))
+                    if (!string.IsNullOrEmpty(this.collateralWalletName))
                     {
                         try
                         {
@@ -570,6 +570,29 @@ namespace MasternodeSetupTool
                     }
 
                     MessageBox.Show("Please ensure that you enter a valid mainchain (collateral) wallet name", "Error", MessageBoxButton.OK);
+                } while (true);
+
+                do
+                {
+                    var inputBox = new InputBox($"Please enter your sidechain (mining) wallet name:");
+
+                    this.miningWalletName = inputBox.ShowDialog();
+
+                    if (!string.IsNullOrEmpty(this.miningWalletName))
+                    {
+                        try
+                        {
+                            if (await this.registrationService.FindWalletByNameAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName))
+                            {
+                                break;
+                            }
+                        }
+                        catch
+                        {
+                        }
+                    }
+
+                    MessageBox.Show("Please ensure that you enter a valid sidechain (mining) wallet name", "Error", MessageBoxButton.OK);
                 } while (true);
 
                 this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_CheckMainWalletSynced";
