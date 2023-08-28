@@ -19,6 +19,8 @@ variables:
   buildConfiguration: 'Release'
   devCmd: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\devenv.com'
   disableToolPath: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\VSI\DisableOutOfProcBuild'
+  majorVersion: '1'
+  minorVersion: '0'
 
 steps:
 - checkout: self
@@ -54,10 +56,9 @@ steps:
 
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '**/*.msi'
-    includeRootFolder: true
+    rootFolderOrFile: '$(installerProjectPath)/$(buildConfiguration)/*.msi'
     archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/MasternodeSetupTool-$(Build.BuildId).zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/MasternodeSetupTool-$(majorVersion).$(minorVersion).$(Build.BuildId).zip'
     replaceExistingArchive: true
 
 - task: PublishBuildArtifacts@1
