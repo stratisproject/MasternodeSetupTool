@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MasternodeSetupTool": {
+      "commandName": "Project",
+      "commandLineArgs": "-testnet"
+    }
+  }
+}

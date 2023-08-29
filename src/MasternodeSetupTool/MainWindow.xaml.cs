@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -7,6 +8,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
 using NBitcoin;
+using Color = System.Windows.Media.Color;
 
 namespace MasternodeSetupTool
 {
@@ -559,7 +561,7 @@ namespace MasternodeSetupTool
                     {
                         try
                         {
-                            if (await this.registrationService.FindWalletByNameAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName))
+                            if (await this.registrationService.FindWalletByNameAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false))
                             {
                                 break;
                             }
@@ -572,6 +574,12 @@ namespace MasternodeSetupTool
                     MessageBox.Show("Please ensure that you enter a valid mainchain (collateral) wallet name", "Error", MessageBoxButton.OK);
                 } while (true);
 
+                this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_EnterMiningWallet";
+                return true;
+            }
+
+            if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_EnterMiningWallet")
+            {
                 do
                 {
                     var inputBox = new InputBox($"Please enter your sidechain (mining) wallet name:");
@@ -582,7 +590,7 @@ namespace MasternodeSetupTool
                     {
                         try
                         {
-                            if (await this.registrationService.FindWalletByNameAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName))
+                            if (await this.registrationService.FindWalletByNameAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false))
                             {
                                 break;
                             }
@@ -596,6 +604,7 @@ namespace MasternodeSetupTool
                 } while (true);
 
                 this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_CheckMainWalletSynced";
+                return true;
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_CheckMainWalletSynced")
@@ -654,7 +663,7 @@ namespace MasternodeSetupTool
             this.currentState = "Begin";
         }
 
-        private void Log(string message, Brush? brush = null, string? updateTag = null)
+        private void LogWithBrush(string message, Brush? brush = null, string? updateTag = null)
         {
             this.statusBar.Dispatcher.Invoke(() =>
             {
@@ -678,9 +687,20 @@ namespace MasternodeSetupTool
             });
         }
 
+        private void Log(string message, string? updateTag = null)
+        {
+            this.statusBar.Dispatcher.Invoke(() =>
+            {
+                LogWithBrush(message, brush: null, updateTag);
+            });
+        }
+
         private void Log(string message, Color color, string? updateTag = null)
         {
-            Log(message, new SolidColorBrush(color), updateTag);
+            this.statusBar.Dispatcher.Invoke(() =>
+            {
+                LogWithBrush(message, new SolidColorBrush(color), updateTag);
+            });
         }
 
         private void LogError(string message)
