@@ -240,8 +240,7 @@ namespace MasternodeSetupTool
                 {
                     if (MessageBox.Show("Federation key exists. Shall we create a new one?", "Key file already present", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.No)
                     {
-                        ResetState();
-
+                        this.nextState = "Setup_CreateRestoreUseExisting_StartMainChain";
                         return true;
                     }
 
