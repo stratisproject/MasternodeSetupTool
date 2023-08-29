@@ -343,6 +343,13 @@ namespace MasternodeSetupTool
                 {
                     this.nextState = "Setup_CreateRestoreUseExisting_UseExisting";
                 }
+
+                if (dialog.Choice == null)
+                {
+                    LogError("Registration cancelled.");
+                    ResetState();
+                    return true;
+                }
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create")
@@ -352,6 +359,12 @@ namespace MasternodeSetupTool
 
                 var dialog = new ConfirmationDialog("Enter mnemonic", "Mnemonic", this.mnemonic, false);
                 dialog.ShowDialog();
+
+                if (dialog.DialogResult == false)
+                {
+                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
+                    return true;
+                }
 
                 this.nextState = "Setup_CreateRestoreUseExisting_Create_Passphrase";
             }
@@ -525,6 +538,12 @@ namespace MasternodeSetupTool
                     var inputBox = new InputBox($"Please enter your 12-word mnemonic:");
 
                     this.mnemonic = inputBox.ShowDialog();
+                    
+                    if (this.mnemonic == null)
+                    {
+                        this.nextState = "Setup_CreateRestoreUseExisting_Select";
+                        return true;
+                    }
 
                     if (!string.IsNullOrEmpty(this.mnemonic))
                     {
@@ -555,6 +574,12 @@ namespace MasternodeSetupTool
                     var inputBox = new InputBox($"Please enter your mainhchain (collateral) wallet name:");
 
                     this.collateralWalletName = inputBox.ShowDialog();
+
+                    if (this.collateralWalletName == null)
+                    {
+                        this.nextState = "Setup_CreateRestoreUseExisting_Select";
+                        return true;
+                    }
 
                     if (!string.IsNullOrEmpty(this.collateralWalletName))
                     {

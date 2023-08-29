@@ -18,6 +18,7 @@ namespace MasternodeSetupTool
             this.Text1.Text = firstTextContent;
             this.Text1.IsReadOnly = !firstTextEditable;
             this.AllowEmpty = allowEmpty;
+            this.DialogResult = false;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -29,6 +30,7 @@ namespace MasternodeSetupTool
                     MessageBox.Show("Please ensure the fields are not empty!", "Error");
                     return;
                 }
+                this.DialogResult = true;
                 this.Close();
             } else
             {

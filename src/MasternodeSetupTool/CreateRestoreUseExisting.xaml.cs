@@ -14,14 +14,14 @@ namespace MasternodeSetupTool
             UseExistingWallet
         }
 
-        private ButtonChoice buttonChoice;
+        private ButtonChoice? buttonChoice;
 
         public CreateRestoreUseExisting()
         {
             InitializeComponent();
         }
 
-        public ButtonChoice Choice
+        public ButtonChoice? Choice
         {
             get
             {
