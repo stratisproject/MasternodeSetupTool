@@ -117,7 +117,7 @@ namespace MasternodeSetupTool
 
                     button = new Button
                     {
-                        Content = "Setup Masternode",
+                        Content = "Register Masternode",
                         Tag = "SetupMasterNode",
                         Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
                         Padding = new Thickness(4.0),
