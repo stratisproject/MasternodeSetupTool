@@ -360,7 +360,7 @@ namespace MasternodeSetupTool
                 var dialog = new ConfirmationDialog("Enter mnemonic", "Mnemonic", this.mnemonic, false);
                 dialog.ShowDialog();
 
-                if (dialog.DialogResult == false)
+                if (dialog.DialogResult != true)
                 {
                     this.nextState = "Setup_CreateRestoreUseExisting_Select";
                     return true;

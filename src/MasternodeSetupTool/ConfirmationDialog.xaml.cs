@@ -18,7 +18,6 @@ namespace MasternodeSetupTool
             this.Text1.Text = firstTextContent;
             this.Text1.IsReadOnly = !firstTextEditable;
             this.AllowEmpty = allowEmpty;
-            this.DialogResult = false;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
