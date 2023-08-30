@@ -252,25 +252,6 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateKey")
             {
-                do
-                {
-                    var inputBox = new InputBox($"Please enter a passphrase (this can be anything, but please write it down):");
-
-                    this.passphrase = inputBox.ShowDialog();
-
-                    if (this.passphrase == null)
-                    {
-                        Error("No passphrase provided, aborting...");
-                        ResetState();
-                        return true;
-                    }
-
-                    if (!string.IsNullOrEmpty(this.passphrase))
-                        break;
-
-                    MessageBox.Show("Please ensure that you enter a valid passphrase", "Error", MessageBoxButton.OK);
-                } while (true);
-
                 string savePath = this.registrationService.CreateFederationKey();
 
                 MessageBox.Show($"Your Masternode public key is: {this.registrationService.PubKey}");
