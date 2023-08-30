@@ -177,39 +177,39 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Run_StartMainChain")
             {
-                await this.registrationService.StartNodeAsync(NodeType.MainChain).ConfigureAwait(false);
+                await this.registrationService.StartNodeAsync(NodeType.MainChain).ConfigureAwait(true);
 
                 this.nextState = "Run_MainChainSynced";
             }
 
             if (this.currentState == "Run_MainChainSynced")
             {
-                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(false);
+                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
-                await this.registrationService.EnsureMainChainNodeAddressIndexerIsSyncedAsync().ConfigureAwait(false);
+                await this.registrationService.EnsureMainChainNodeAddressIndexerIsSyncedAsync().ConfigureAwait(true);
 
                 this.nextState = "Run_StartSideChain";
             }
 
             if (this.currentState == "Run_StartSideChain")
             {
-                await this.registrationService.StartNodeAsync(NodeType.SideChain).ConfigureAwait(false);
+                await this.registrationService.StartNodeAsync(NodeType.SideChain).ConfigureAwait(true);
 
                 this.nextState = "Run_SideChainSynced";
             }
 
             if (this.currentState == "Run_SideChainSynced")
             {
-                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(false);
+                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
-                await this.registrationService.EnsureNodeIsSyncedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(false);
+                await this.registrationService.EnsureNodeIsSyncedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
                 this.nextState = "Run_LaunchBrowser";
             }
 
             if (this.currentState == "Run_LaunchBrowser")
             {
-                await this.registrationService.StartMasterNodeDashboardAsync().ConfigureAwait(false);
+                await this.registrationService.StartMasterNodeDashboardAsync().ConfigureAwait(true);
                 this.registrationService.LaunchBrowser($"http://localhost:{RegistrationService.DashboardPort}");
 
                 ResetState();
@@ -263,7 +263,7 @@ namespace MasternodeSetupTool
             if (this.currentState == "Setup_CreateRestoreUseExisting_StartMainChain")
             {
                 // All 3 sub-branches of this state require the mainchain and sidechain nodes to be initialized, so do that first.
-                if (!await this.registrationService.StartNodeAsync(NodeType.MainChain).ConfigureAwait(false))
+                if (!await this.registrationService.StartNodeAsync(NodeType.MainChain).ConfigureAwait(true))
                 {
                     Error("Cannot start the Mainchain node, aborting...");
                     ResetState();
@@ -276,16 +276,16 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_MainChainSynced")
             {
-                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(false);
+                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
-                await this.registrationService.EnsureMainChainNodeAddressIndexerIsSyncedAsync().ConfigureAwait(false);
+                await this.registrationService.EnsureMainChainNodeAddressIndexerIsSyncedAsync().ConfigureAwait(true);
 
                 this.nextState = "Setup_CreateRestoreUseExisting_StartSideChain";
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_StartSideChain")
             {
-                if (!await this.registrationService.StartNodeAsync(NodeType.SideChain).ConfigureAwait(false))
+                if (!await this.registrationService.StartNodeAsync(NodeType.SideChain).ConfigureAwait(true))
                 {
                     Error("Cannot start the Sidechain node, aborting...");
                     ResetState();
@@ -298,9 +298,9 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_SideChainSynced")
             {
-                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.SideChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(false);
+                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.SideChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
-                await this.registrationService.EnsureNodeIsSyncedAsync(NodeType.SideChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(false);
+                await this.registrationService.EnsureNodeIsSyncedAsync(NodeType.SideChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
                 this.nextState = "Setup_CreateRestoreUseExisting_Select";
             }
@@ -388,14 +388,14 @@ namespace MasternodeSetupTool
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_CreateCollateralWallet")
             {
                 //TODO: ask for a new wallet name if default one is present already
-                if (!await this.registrationService.RestoreWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, NodeType.MainChain, this.collateralWalletName, this.mnemonic, this.passphrase, this.collateralWalletPassword).ConfigureAwait(false))
+                if (!await this.registrationService.RestoreWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, NodeType.MainChain, this.collateralWalletName, this.mnemonic, this.passphrase, this.collateralWalletPassword).ConfigureAwait(true))
                 {
                     LogError("Cannot restore collateral wallet, aborting...");
                     ResetState();
                     return true;
                 }
 
-                if (!await this.registrationService.ResyncWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false))
+                if (!await this.registrationService.ResyncWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true))
                 {
                     LogError("Cannot resync collateral wallet, aborting...");
                     ResetState();
@@ -407,23 +407,23 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_SyncCollateralWallet")
             {
-                int percentSynced = await this.registrationService.WalletSyncProgressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false);
+                int percentSynced = await this.registrationService.WalletSyncProgressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true);
                 Log($"Main chain collateral wallet {percentSynced}% synced", updateTag: this.currentState);
 
-                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false))
+                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true))
                     this.nextState = "Setup_CreateRestoreUseExisting_Create_CreateMiningWallet";
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_CreateMiningWallet")
             {
-                if (!await this.registrationService.RestoreWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, NodeType.SideChain, this.miningWalletName, this.mnemonic, this.passphrase, this.miningWalletPassword).ConfigureAwait(false))
+                if (!await this.registrationService.RestoreWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, NodeType.SideChain, this.miningWalletName, this.mnemonic, this.passphrase, this.miningWalletPassword).ConfigureAwait(true))
                 {
                     LogError("Cannot restore mining wallet, aborting...");
                     ResetState();
                     return true;
                 }
 
-                if (!await this.registrationService.ResyncWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false))
+                if (!await this.registrationService.ResyncWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true))
                 {
                     LogError("Cannot resync mining wallet, aborting...");
                     ResetState();
@@ -435,16 +435,16 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_SyncMiningWallet")
             {
-                int percentSynced = await this.registrationService.WalletSyncProgressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false);
+                int percentSynced = await this.registrationService.WalletSyncProgressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true);
                 Log($"Side chain mining wallet {percentSynced}% synced", updateTag: this.currentState);
 
-                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false))
+                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true))
                     this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_AskForCollateral")
             {
-                this.collateralAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false);
+                this.collateralAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true);
 
                 MessageBox.Show($"Your collateral address is: {this.collateralAddress}", "Collateral Address", MessageBoxButton.OK);
 
@@ -454,7 +454,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_CheckForCollateral")
             {
-                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, RegistrationService.CollateralRequirement).ConfigureAwait(false))
+                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, RegistrationService.CollateralRequirement).ConfigureAwait(true))
                     this.nextState = "Setup_CreateRestoreUseExisting_CheckForRegistrationFee";
                 else
                     Log($"Waiting for collateral wallet to have a balance of at least {RegistrationService.CollateralRequirement} STRAX", updateTag: this.currentState);
@@ -462,7 +462,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_CheckForRegistrationFee")
             {
-                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(false))
+                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(true))
                     this.nextState = "Setup_CreateRestoreUseExisting_PerformRegistration";
                 else
                     this.nextState = "Setup_CreateRestoreUseExisting_PerformCrossChain";
@@ -477,9 +477,9 @@ namespace MasternodeSetupTool
                     return true;
                 }
 
-                this.cirrusAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false);
+                this.cirrusAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true);
 
-                if (await this.registrationService.PerformCrossChainTransferAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, this.collateralWalletPassword, "500.1", this.cirrusAddress, this.collateralAddress).ConfigureAwait(false))
+                if (await this.registrationService.PerformCrossChainTransferAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, this.collateralWalletPassword, "500.1", this.cirrusAddress, this.collateralAddress).ConfigureAwait(true))
                 {
                     this.nextState = "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer";
                 }
@@ -489,7 +489,7 @@ namespace MasternodeSetupTool
             {
                 Log("Waiting for registration fee to be sent via cross-chain transfer...", updateTag: this.currentState);
 
-                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(false))
+                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(true))
                 {
                     this.nextState = "Setup_CreateRestoreUseExisting_PerformRegistration";
                 }
@@ -497,14 +497,14 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_PerformRegistration")
             {
-                await this.registrationService.CallJoinFederationRequestAsync(this.collateralAddress, this.collateralWalletName, this.collateralWalletPassword, this.miningWalletName, this.miningWalletPassword).ConfigureAwait(false);
+                await this.registrationService.CallJoinFederationRequestAsync(this.collateralAddress, this.collateralWalletName, this.collateralWalletPassword, this.miningWalletName, this.miningWalletPassword).ConfigureAwait(true);
 
                 this.nextState = "Setup_CreateRestoreUseExisting_WaitForRegistration";
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_WaitForRegistration")
             {
-                if (await this.registrationService.MonitorJoinFederationRequestAsync().ConfigureAwait(false))
+                if (await this.registrationService.MonitorJoinFederationRequestAsync().ConfigureAwait(true))
                 {
                     Log("Registration complete");
                     this.nextState = "Run_LaunchBrowser";
@@ -566,7 +566,7 @@ namespace MasternodeSetupTool
                     {
                         try
                         {
-                            if (await this.registrationService.FindWalletByNameAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false))
+                            if (await this.registrationService.FindWalletByNameAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true))
                             {
                                 break;
                             }
@@ -595,7 +595,7 @@ namespace MasternodeSetupTool
                     {
                         try
                         {
-                            if (await this.registrationService.FindWalletByNameAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false))
+                            if (await this.registrationService.FindWalletByNameAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true))
                             {
                                 break;
                             }
@@ -614,7 +614,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_CheckMainWalletSynced")
             {
-                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(false))
+                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true))
                 {
                     this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_CheckSideWalletSynced";
                 }
@@ -624,7 +624,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_CheckSideWalletSynced")
             {
-                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(false))
+                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true))
                 {
                     // Now we can jump back into the same sequence as the other 2 sub-branches.
                     this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
