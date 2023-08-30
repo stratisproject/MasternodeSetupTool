@@ -708,6 +708,7 @@ namespace MasternodeSetupTool
                 }
 
                 inlines.Add(inline);
+                this.logScrollArea.ScrollToBottom();
             });
         }
 

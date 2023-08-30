@@ -23,7 +23,7 @@
             </Grid.Background>
         </Grid>
 
-        <ScrollViewer Grid.Row="0" Grid.Column="1">
+        <ScrollViewer Name="logScrollArea" Grid.Row="0" Grid.Column="1">
             <TextBlock 
                 ScrollViewer.HorizontalScrollBarVisibility="Visible"
                 ScrollViewer.VerticalScrollBarVisibility="Visible"
