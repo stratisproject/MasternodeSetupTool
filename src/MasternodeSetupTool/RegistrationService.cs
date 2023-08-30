@@ -481,24 +481,33 @@ namespace MasternodeSetupTool
 
             var recipients = new List<RecipientModel>() { new RecipientModel() { DestinationAddress = federationAddress, Amount = amount.ToString() } };
 
-            WalletBuildTransactionModel builtTransaction = await BuildTransactionAsync(apiPort,
-                walletName,
-                walletPassword,
-                "account 0",
-                recipients,
-                opReturnData: cirrusAddress,
-                opReturnAmount: "0",
-                changeAddress: changeAddress).ConfigureAwait(false);
-
-            if (!string.IsNullOrWhiteSpace(builtTransaction.Hex))
+            try
             {
-                Status($"Built cross-chain transaction: {builtTransaction.TransactionId}. Sending...");
+                WalletBuildTransactionModel builtTransaction = await BuildTransactionAsync(apiPort,
+                    walletName,
+                    walletPassword,
+                    "account 0",
+                    recipients,
+                    opReturnData: cirrusAddress,
+                    opReturnAmount: "0",
+                    changeAddress: changeAddress).ConfigureAwait(false);
 
-                SendTransaction(apiPort, builtTransaction.Hex);
+                if (!string.IsNullOrWhiteSpace(builtTransaction.Hex))
+                {
+                    Status($"Built cross-chain transaction: {builtTransaction.TransactionId}. Sending...");
 
-                Status($"Sent transaction: {builtTransaction.TransactionId}");
+                    SendTransaction(apiPort, builtTransaction.Hex);
 
-                return true;
+                    Status($"Sent transaction: {builtTransaction.TransactionId}");
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Error("Error building cross-chain transfer transaction", ex);
+
+                return false;
             }
 
             Error("Error building cross-chain transfer transaction");
