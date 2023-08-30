@@ -408,10 +408,17 @@ namespace MasternodeSetupTool
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_SyncCollateralWallet")
             {
                 int percentSynced = await this.registrationService.WalletSyncProgressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true);
-                Log($"Main chain collateral wallet {percentSynced}% synced", updateTag: this.currentState);
+                Log($"Mainchain (collateral) wallet is {percentSynced}% synced", updateTag: this.currentState);
 
                 if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true))
+                {
                     this.nextState = "Setup_CreateRestoreUseExisting_Create_CreateMiningWallet";
+                    Log($"Mainchain (collateral) wallet synced successfuly.", updateTag: this.currentState);
+                }
+                else
+                {
+                    this.nextState = "Setup_CreateRestoreUseExisting_Create_SyncCollateralWallet";
+                }
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_CreateMiningWallet")
@@ -436,10 +443,17 @@ namespace MasternodeSetupTool
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_SyncMiningWallet")
             {
                 int percentSynced = await this.registrationService.WalletSyncProgressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true);
-                Log($"Side chain mining wallet {percentSynced}% synced", updateTag: this.currentState);
+                Log($"Sidechain (mining) wallet is {percentSynced}% synced", updateTag: this.currentState);
 
                 if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true))
+                {
                     this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
+                    Log($"Sidechain (mining) wallet synced successfuly.", updateTag: this.currentState);
+                }
+                else
+                {
+                    this.nextState = "Setup_CreateRestoreUseExisting_Create_SyncMiningWallet";
+                }
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_AskForCollateral")
