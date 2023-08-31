@@ -350,7 +350,7 @@ namespace MasternodeSetupTool
 
         public async Task<bool> RestoreWalletAsync(int apiPort, NodeType nodeType, string walletName, string mnemonic, string passphrase, string password)
         {
-            Status($"You have chosen to restore your {nodeType} wallet.");
+            Status($"You have chosen to create your {nodeType} wallet.");
 
             var walletRecoveryRequest = new WalletRecoveryRequest()
             {
