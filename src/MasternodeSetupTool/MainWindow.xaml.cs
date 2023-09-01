@@ -7,7 +7,9 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
+using CSharpFunctionalExtensions;
 using NBitcoin;
+using Stratis.Bitcoin.Features.Wallet.Models;
 using Color = System.Windows.Media.Color;
 
 namespace MasternodeSetupTool
@@ -32,8 +34,12 @@ namespace MasternodeSetupTool
         private string? nextState = null;
 
         private bool createdButtons;
-        private string? mnemonic;
-        private string? passphrase;
+
+        private string? collateralWalletMnemonic;
+        private string? miningWalletMnemonic;
+
+        private string? collateralWalletPassphrase;
+        private string? miningWalletPassphrase;
 
         private string? collateralWalletPassword;
         private string? miningWalletPassword;
@@ -46,9 +52,9 @@ namespace MasternodeSetupTool
 
         private bool PrintStacktraces
         {
-            get 
+            get
             {
-                #if DEBUG
+#if DEBUG
                 return true;
 #endif
 #pragma warning disable CS0162 // Unreachable code detected
@@ -335,125 +341,26 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create")
             {
-                var temp = new Mnemonic("English", WordCount.Twelve);
-                this.mnemonic = string.Join(' ', temp.Words);
 
-                var dialog = new ConfirmationDialog("Enter mnemonic", "Mnemonic", this.mnemonic, false);
-                dialog.ShowDialog();
-
-                if (dialog.DialogResult != true)
+                if (!await HandleCreateWalletsAsync(NodeType.MainChain, createNewMnemonic: true))
                 {
                     this.nextState = "Setup_CreateRestoreUseExisting_Select";
                     return true;
                 }
 
-                this.nextState = "Setup_CreateRestoreUseExisting_Create_Passphrase";
+                this.nextState = "Setup_CreateRestoreUseExisting_Create_Mining";
             }
 
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Create_Passphrase")
+            if (this.currentState == "Setup_CreateRestoreUseExisting_Create_Mining")
             {
-                var dialog = new ConfirmationDialog("Enter passphrase", "Passphrase", "", true, allowEmpty: true);
-                dialog.ShowDialog();
 
-                this.passphrase = dialog.Text2.Text ?? "";
-
-                this.nextState = "Setup_CreateRestoreUseExisting_Create_CollateralPassword";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Create_CollateralPassword")
-            {
-                // TODO: add loop for password request
-                var dialog = new ConfirmationDialog("Enter collateral wallet password (Mainchain)", "Password", "", true);
-                dialog.ShowDialog();
-
-                this.collateralWalletPassword = dialog.Text2.Text;
-
-                this.collateralWalletName = "CollateralWallet";
-
-                this.nextState = "Setup_CreateRestoreUseExisting_Create_MiningPassword";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Create_MiningPassword")
-            {
-                var dialog = new ConfirmationDialog("Enter mining wallet password (Sidechain)", "Password", "", true);
-                dialog.ShowDialog();
-
-                this.miningWalletPassword = dialog.Text2.Text;
-
-                this.miningWalletName = "MiningWallet";
-
-                this.nextState = "Setup_CreateRestoreUseExisting_Create_CreateCollateralWallet";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Create_CreateCollateralWallet")
-            {
-                //TODO: ask for a new wallet name if default one is present already
-                if (!await this.registrationService.RestoreWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, NodeType.MainChain, this.collateralWalletName, this.mnemonic, this.passphrase, this.collateralWalletPassword).ConfigureAwait(true))
+                if (!await HandleCreateWalletsAsync(NodeType.SideChain, createNewMnemonic: true))
                 {
-                    LogError("Cannot restore collateral wallet, aborting...");
-                    ResetState();
+                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
                     return true;
                 }
 
-                if (!await this.registrationService.ResyncWalletAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true))
-                {
-                    LogError("Cannot resync collateral wallet, aborting...");
-                    ResetState();
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_Create_SyncCollateralWallet";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Create_SyncCollateralWallet")
-            {
-                int percentSynced = await this.registrationService.WalletSyncProgressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true);
-                Log($"Mainchain (collateral) wallet is {percentSynced}% synced", updateTag: this.currentState);
-
-                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Create_CreateMiningWallet";
-                    Log($"Mainchain (collateral) wallet synced successfuly.", updateTag: this.currentState);
-                }
-                else
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Create_SyncCollateralWallet";
-                }
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Create_CreateMiningWallet")
-            {
-                if (!await this.registrationService.RestoreWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, NodeType.SideChain, this.miningWalletName, this.mnemonic, this.passphrase, this.miningWalletPassword).ConfigureAwait(true))
-                {
-                    LogError("Cannot restore mining wallet, aborting...");
-                    ResetState();
-                    return true;
-                }
-
-                if (!await this.registrationService.ResyncWalletAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true))
-                {
-                    LogError("Cannot resync mining wallet, aborting...");
-                    ResetState();
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_Create_SyncMiningWallet";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Create_SyncMiningWallet")
-            {
-                int percentSynced = await this.registrationService.WalletSyncProgressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true);
-                Log($"Sidechain (mining) wallet is {percentSynced}% synced", updateTag: this.currentState);
-
-                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
-                    Log($"Sidechain (mining) wallet synced successfuly.", updateTag: this.currentState);
-                }
-                else
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Create_SyncMiningWallet";
-                }
+                this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_AskForCollateral")
@@ -527,127 +434,446 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Restore")
             {
-                // The only material difference is that the user needs to supply their own mnemonic; so just retrieve it via an input dialog and then jump back into the Create sub-branch.
-                do
+                if (!await HandleCreateWalletsAsync(NodeType.MainChain, createNewMnemonic: false))
                 {
-                    var inputBox = new InputBox($"Please enter your 12-word mnemonic:");
+                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
+                    return true;
+                }
 
-                    this.mnemonic = inputBox.ShowDialog();
-                    
-                    if (this.mnemonic == null)
-                    {
-                        this.nextState = "Setup_CreateRestoreUseExisting_Select";
-                        return true;
-                    }
+                this.nextState = "Setup_CreateRestoreUseExisting_Restore_Mining";
+            }
 
-                    if (!string.IsNullOrEmpty(this.mnemonic))
-                    {
-                        try
-                        {
-                            // Test the mnemonic to ensure validity.
-                            var temp = new Mnemonic(this.mnemonic, Wordlist.English);
+            if (this.currentState == "Setup_CreateRestoreUseExisting_Restore_Mining")
+            {
+                if (!await HandleCreateWalletsAsync(NodeType.SideChain, createNewMnemonic: false))
+                {
+                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
+                    return true;
+                }
 
-                            // If there was no exception, break out of the loop and continue.
-                            break;
-                        }
-                        catch
-                        {
-                        }
-                    }
-
-                    MessageBox.Show("Please ensure that you enter a valid mnemonic", "Error", MessageBoxButton.OK);
-                } while (true);
-
-                this.nextState = "Setup_CreateRestoreUseExisting_Create_Passphrase";
+                this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting")
             {
-                // Need to get the names of the wallets for the main chain (collateral) and side chain (mining) nodes.
-                do
+                if (!await HandleExistingWalletNameAsync(NodeType.MainChain))
                 {
-                    var inputBox = new InputBox($"Please enter your mainhchain (collateral) wallet name:");
+                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
+                    return true;
+                }
 
-                    this.collateralWalletName = inputBox.ShowDialog();
-
-                    if (this.collateralWalletName == null)
-                    {
-                        this.nextState = "Setup_CreateRestoreUseExisting_Select";
-                        return true;
-                    }
-
-                    if (!string.IsNullOrEmpty(this.collateralWalletName))
-                    {
-                        try
-                        {
-                            if (await this.registrationService.FindWalletByNameAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true))
-                            {
-                                break;
-                            }
-                        }
-                        catch
-                        {
-                        }
-                    }
-
-                    MessageBox.Show("Please ensure that you enter a valid mainchain (collateral) wallet name", "Error", MessageBoxButton.OK);
-                } while (true);
-
-                this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_EnterMiningWallet";
-                return true;
+                this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_CollateralPassword";
             }
 
-            if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_EnterMiningWallet")
+            if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_CollateralPassword")
             {
-                do
+                if (!HandlePassword(NodeType.MainChain))
                 {
-                    var inputBox = new InputBox($"Please enter your sidechain (mining) wallet name:");
+                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
+                    return true;
+                }
 
-                    this.miningWalletName = inputBox.ShowDialog();
+                this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_Mining";
+            }
 
-                    if (!string.IsNullOrEmpty(this.miningWalletName))
-                    {
-                        try
-                        {
-                            if (await this.registrationService.FindWalletByNameAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true))
-                            {
-                                break;
-                            }
-                        }
-                        catch
-                        {
-                        }
-                    }
+            if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_Mining")
+            {
+                if (!await HandleExistingWalletNameAsync(NodeType.SideChain))
+                {
+                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
+                    return true;
+                }
 
-                    MessageBox.Show("Please ensure that you enter a valid sidechain (mining) wallet name", "Error", MessageBoxButton.OK);
-                } while (true);
+                this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_MiningPassword";
+            }
+
+            if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_MiningPassword")
+            {
+                if (!HandlePassword(NodeType.SideChain))
+                {
+                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
+                    return true;
+                }
 
                 this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_CheckMainWalletSynced";
-                return true;
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_CheckMainWalletSynced")
             {
-                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true))
+                if (await HandleWalletSyncAsync(NodeType.MainChain))
                 {
                     this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_CheckSideWalletSynced";
                 }
-
-                Log("Waiting for mainchain wallet to sync...", updateTag: this.currentState);
+                else
+                {
+                    return true;
+                }
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_CheckSideWalletSynced")
             {
-                if (await this.registrationService.IsWalletSyncedAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true))
+                if (await HandleWalletSyncAsync(NodeType.SideChain))
                 {
                     // Now we can jump back into the same sequence as the other 2 sub-branches.
                     this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
                 }
-
-                Log("Waiting for sidechain wallet to sync...", updateTag: this.currentState);
+                else
+                {
+                    return true;
+                }
             }
 
             return false;
+        }
+
+        private async Task<bool> HandleExistingWalletNameAsync(NodeType nodeType)
+        {
+            string? walletName;
+            do
+            {
+                var inputBox = new InputBox($"Please enter your {WalletTypeName(nodeType)} ({nodeType}) wallet name:");
+
+                walletName = inputBox.ShowDialog();
+
+                if (walletName == null)
+                {
+                    return false;
+                }
+
+                if (!string.IsNullOrEmpty(walletName))
+                {
+                    try
+                    {
+                        Network network = nodeType == NodeType.MainChain
+                            ? this.registrationService.MainchainNetwork
+                            : this.registrationService.SidechainNetwork;
+
+                        if (await this.registrationService.FindWalletByNameAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
+                        {
+                            break;
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                MessageBox.Show($"Please ensure that you enter a valid {WalletTypeName(nodeType)} ({nodeType}) wallet name", "Error", MessageBoxButton.OK);
+            } while (true);
+
+            if (nodeType == NodeType.MainChain)
+            {
+                this.collateralWalletName = walletName;
+            }
+            else
+            {
+                this.miningWalletName = walletName;
+            }
+
+            return true;
+        }
+
+        private async Task<bool> HandleNewWalletNameAsync(NodeType nodeType)
+        {
+            string? walletName;
+            do
+            {
+                var inputBox = new InputBox($"Please enter new {WalletTypeName(nodeType)} ({nodeType}) wallet name:");
+
+                walletName = inputBox.ShowDialog();
+
+                if (walletName == null)
+                {
+                    return false;
+                }
+
+                if (!string.IsNullOrEmpty(walletName))
+                {
+                    try
+                    {
+                        Network network = nodeType == NodeType.MainChain
+                            ? this.registrationService.MainchainNetwork
+                            : this.registrationService.SidechainNetwork;
+
+                        if (!await this.registrationService.FindWalletByNameAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            MessageBox.Show("A wallet with this name already exists", "Error");
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                MessageBox.Show($"Please ensure that you enter a valid (and non-existing) {WalletTypeName(nodeType)} ({nodeType}) wallet name", "Error", MessageBoxButton.OK);
+            } while (true);
+
+            if (nodeType == NodeType.MainChain)
+            {
+                this.collateralWalletName = walletName;
+            }
+            else
+            {
+                this.miningWalletName = walletName;
+            }
+
+            return true;
+        }
+
+        private bool HandleNewMnemonic(NodeType nodeType)
+        {
+            var mnemonic = string.Join(' ', new Mnemonic("English", WordCount.Twelve).Words);
+
+            var dialog = new ConfirmationDialog($"Enter mnemonic for the {WalletTypeName(nodeType)} wallet", "Mnemonic", mnemonic, false);
+            dialog.ShowDialog();
+
+            if (dialog.DialogResult != true)
+            {
+                return false;
+            }
+
+            if (nodeType == NodeType.MainChain)
+            {
+                this.collateralWalletMnemonic = mnemonic;
+            }
+            else
+            {
+                this.miningWalletMnemonic = mnemonic;
+            }
+
+            return true;
+        }
+
+        private bool HandleUserMnemonic(NodeType nodeType)
+        {
+            string? mnemonic;
+
+            // The only material difference is that the user needs to supply their own mnemonic; so just retrieve it via an input dialog and then jump back into the Create sub-branch.
+            do
+            {
+                var inputBox = new InputBox($"Please enter your mnemonic for the {WalletTypeName(nodeType)} ({nodeType}) wallet", "Mnemonic");
+
+                mnemonic = inputBox.ShowDialog();
+
+                if (mnemonic == null)
+                {
+                    return false;
+                }
+
+                if (!string.IsNullOrEmpty(mnemonic))
+                {
+                    try
+                    {
+                        // Test the mnemonic to ensure validity.
+                        var temp = new Mnemonic(mnemonic, Wordlist.English);
+
+                        // If there was no exception, break out of the loop and continue.
+                        break;
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                MessageBox.Show("Please ensure that you enter a valid mnemonic", "Error", MessageBoxButton.OK);
+            } while (true);
+
+            if (nodeType == NodeType.MainChain)
+            {
+                this.collateralWalletMnemonic = mnemonic;
+            }
+            else
+            {
+                this.miningWalletMnemonic = mnemonic;
+            }
+
+            return true;
+        }
+
+        private bool HandlePassphrase(NodeType nodeType)
+        {
+            var dialog = new ConfirmationDialog($"Enter passphrase for the {WalletTypeName(nodeType)} wallet",
+                "Passphrase",
+                "",
+                true,
+                allowEmpty: true);
+
+            dialog.ShowDialog();
+
+            if (dialog.DialogResult != true)
+            {
+                return false;
+            }
+
+            string result = dialog.Text2.Text ?? "";
+
+            if (nodeType == NodeType.MainChain)
+            {
+                this.collateralWalletPassphrase = result;
+            }
+            else
+            {
+                this.miningWalletPassphrase = result;
+            }
+
+            return true;
+        }
+
+        private bool HandlePassword(NodeType nodeType)
+        {
+            var dialog = new ConfirmationDialog(
+                $"Enter {WalletTypeName(nodeType)} wallet password ({nodeType})", 
+                "Password", 
+                "", 
+                true);
+
+            dialog.ShowDialog();
+
+            if (dialog.DialogResult != true)
+            {
+                return false;
+            }
+
+            if (nodeType == NodeType.MainChain)
+            {
+                this.collateralWalletPassword = dialog.Text2.Text;
+            }
+            else
+            {
+                this.miningWalletPassword = dialog.Text2.Text;
+            }
+
+            return true;
+        }
+
+        private async Task<bool> HandleWalletCreationAsync(NodeType nodeType)
+        {
+            Network network = nodeType == NodeType.MainChain
+                ? this.registrationService.MainchainNetwork
+                : this.registrationService.SidechainNetwork;
+
+            string? walletName = nodeType == NodeType.MainChain
+                ? this.collateralWalletName
+                : this.miningWalletName;
+
+            string? walletMnemonic = nodeType == NodeType.MainChain
+                ? this.collateralWalletMnemonic
+                : this.miningWalletMnemonic;
+
+            string? walletPassphrase = nodeType == NodeType.MainChain
+                ? this.collateralWalletPassphrase
+                : this.miningWalletPassphrase;
+
+            string? walletPassword = nodeType == NodeType.MainChain
+                ? this.collateralWalletPassword
+                : this.miningWalletPassword;
+
+
+            //TODO: ask for a new wallet name if default one is present already
+            if (walletName == null 
+                || walletMnemonic == null 
+                || walletPassphrase == null 
+                || walletPassword == null 
+                || !await this.registrationService.RestoreWalletAsync(network.DefaultAPIPort, nodeType, walletName, walletMnemonic, walletPassphrase, walletPassword).ConfigureAwait(true))
+            {
+                LogError($"Cannot restore {WalletTypeName(nodeType)} wallet, aborting...");
+                return false;
+            }
+
+            if (!await this.registrationService.ResyncWalletAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
+            {
+                LogError($"Cannot resync {WalletTypeName(nodeType)} wallet, aborting...");
+                return false;
+            }
+
+            return true;
+        }
+
+        private async Task<bool> HandleWalletSyncAsync(NodeType nodeType)
+        {
+            string logTag = "HandleWalletSyncAsync" + nodeType;
+
+            Network network = nodeType == NodeType.MainChain
+                ? this.registrationService.MainchainNetwork
+                : this.registrationService.SidechainNetwork;
+
+            string? walletName = nodeType == NodeType.MainChain
+                ? this.collateralWalletName
+                : this.miningWalletName;
+
+            if (walletName == null)
+            {
+                throw new ArgumentException("Wallet name can not be null.");
+            }
+
+            int percentSynced = await this.registrationService.WalletSyncProgressAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true);
+            Log($"{nodeType} ({WalletTypeName(nodeType)}) wallet is {percentSynced}% synced", updateTag: logTag);
+
+            if (await this.registrationService.IsWalletSyncedAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
+            {
+                Log($"{nodeType} ({WalletTypeName(nodeType)}) wallet synced successfuly.", updateTag: logTag);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private async Task<bool> HandleCreateWalletsAsync(NodeType nodeType, bool createNewMnemonic)
+        {
+            if (createNewMnemonic)
+            {
+                if (!HandleNewMnemonic(nodeType))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (!HandleUserMnemonic(nodeType))
+                {
+                    return false;
+                }
+            }
+
+            if (!await HandleNewWalletNameAsync(nodeType))
+            {
+                return false;
+            }
+
+            if (!HandlePassphrase(nodeType))
+            {
+                return false;
+            }
+
+            if (!HandlePassword(nodeType))
+            {
+                return false;
+            }
+
+            if (!await HandleWalletCreationAsync(nodeType))
+            {
+                return false;
+            }
+
+            try
+            {
+                while (!await HandleWalletSyncAsync(nodeType))
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+                }
+            }
+            catch
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -750,6 +976,11 @@ namespace MasternodeSetupTool
         {
             Error(message);
             Error(exception);
+        }
+
+        private string WalletTypeName(NodeType nodeType)
+        {
+            return nodeType == NodeType.MainChain ? "collateral" : "mining";
         }
     }
 }
