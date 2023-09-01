@@ -51,7 +51,7 @@
             Margin="10" />
         
         <Button 
-            Content="Ok" 
+            Content="OK" 
             Click="Button_Click" 
             Padding="8, 4, 8, 4" 
             Grid.ColumnSpan="2"
