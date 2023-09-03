@@ -617,6 +617,12 @@ namespace MasternodeSetupTool
                     return false;
                 }
             }
+            catch (FlurlHttpException ex) when (ex.StatusCode == 400)
+            {
+                Error($"ERROR: An exception occurred trying to register your masternode.");
+                Error($"Error message: {await ex.GetResponseStringAsync()}");
+                return false;
+            }
             catch (Exception ex)
             {
                 Error($"ERROR: An exception occurred trying to register your masternode.", ex);
