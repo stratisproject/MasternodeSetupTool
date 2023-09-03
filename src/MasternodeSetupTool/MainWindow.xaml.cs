@@ -750,7 +750,7 @@ namespace MasternodeSetupTool
             return true;
         }
 
-        private async Task<bool> HandleWalletCreationAsync(NodeType nodeType)
+        private async Task<bool> HandleWalletCreationAsync(NodeType nodeType, bool createNewWallet)
         {
             Network network = nodeType == NodeType.MainChain
                 ? this.registrationService.MainchainNetwork
@@ -780,9 +780,10 @@ namespace MasternodeSetupTool
                         || walletMnemonic == null
                         || walletPassphrase == null
                         || walletPassword == null
-                        || !await this.registrationService.RestoreWalletAsync(network.DefaultAPIPort, nodeType, walletName, walletMnemonic, walletPassphrase, walletPassword).ConfigureAwait(true))
+                        || !await this.registrationService.RestoreWalletAsync(network.DefaultAPIPort, nodeType, walletName, walletMnemonic, walletPassphrase, walletPassword, createNewWallet).ConfigureAwait(true))
                     {
-                        LogError($"Cannot restore {WalletTypeName(nodeType)} wallet, aborting...");
+                        string action = createNewWallet ? "create" : "restore";
+                        LogError($"Cannot {action} {WalletTypeName(nodeType)} wallet, aborting...");
                         return false;
                     }
                     break;
@@ -872,7 +873,7 @@ namespace MasternodeSetupTool
                 return false;
             }
 
-            if (!await HandleWalletCreationAsync(nodeType))
+            if (!await HandleWalletCreationAsync(nodeType, createNewMnemonic))
             {
                 return false;
             }
