@@ -183,7 +183,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Run_StartMainChain")
             {
-                await this.registrationService.StartNodeAsync(NodeType.MainChain).ConfigureAwait(true);
+                await this.registrationService.StartNodeAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
                 this.nextState = "Run_MainChainSynced";
             }
@@ -199,7 +199,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Run_StartSideChain")
             {
-                await this.registrationService.StartNodeAsync(NodeType.SideChain).ConfigureAwait(true);
+                await this.registrationService.StartNodeAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
                 this.nextState = "Run_SideChainSynced";
             }
@@ -269,7 +269,7 @@ namespace MasternodeSetupTool
             if (this.currentState == "Setup_CreateRestoreUseExisting_StartMainChain")
             {
                 // All 3 sub-branches of this state require the mainchain and sidechain nodes to be initialized, so do that first.
-                if (!await this.registrationService.StartNodeAsync(NodeType.MainChain).ConfigureAwait(true))
+                if (!await this.registrationService.StartNodeAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true))
                 {
                     Error("Cannot start the Mainchain node, aborting...");
                     ResetState();
@@ -291,7 +291,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_StartSideChain")
             {
-                if (!await this.registrationService.StartNodeAsync(NodeType.SideChain).ConfigureAwait(true))
+                if (!await this.registrationService.StartNodeAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true))
                 {
                     Error("Cannot start the Sidechain node, aborting...");
                     ResetState();

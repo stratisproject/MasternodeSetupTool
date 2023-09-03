@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Flurl;
 using Flurl.Http;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using NBitcoin;
 using NBitcoin.DataEncoders;
 using Newtonsoft.Json;
@@ -109,8 +110,15 @@ namespace MasternodeSetupTool
             this.logger.Error(message, exception);
         }
 
-        public async Task<bool> StartNodeAsync(NodeType nodeType)
+        public async Task<bool> StartNodeAsync(NodeType nodeType, int apiPort)
         {
+            if (await CheckNodeIsRunningAsync(apiPort))
+            {
+                Status($"{nodeType} is already running. We will shutdown and rerun it.");
+                await ShutdownNodeAsync(nodeType, apiPort);
+                await Task.Delay(TimeSpan.FromSeconds(2));
+            }
+
             var argumentBuilder = new StringBuilder();
 
             argumentBuilder.Append("Stratis.CirrusMinerD.exe ");
@@ -163,7 +171,23 @@ namespace MasternodeSetupTool
             return true;
         }
 
-        private async Task<bool> CheckNodeIsRunningAsync(NodeType nodeType, int apiPort)
+        public async Task ShutdownNodeAsync(NodeType nodeType, int apiPort)
+        {
+            try
+            {
+                await $"http://localhost:{apiPort}/api"
+                    .AppendPathSegment("node/shutdown")
+                    .WithHeader("Content-Type", "application/json-patch+json")
+                    .PostAsync();
+            }
+            catch (Exception e) 
+            {
+                Error($"Can not shutdown {nodeType}.");
+                Error(e);
+            }
+        }
+
+        private async Task<bool> CheckNodeIsRunningAsync(int apiPort)
         {
             try
             {
