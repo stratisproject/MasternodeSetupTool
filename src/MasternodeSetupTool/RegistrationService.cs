@@ -121,7 +121,6 @@ namespace MasternodeSetupTool
 
             var argumentBuilder = new StringBuilder();
 
-            argumentBuilder.Append("Stratis.CirrusMinerD.exe ");
             argumentBuilder.Append($"-{nodeType.ToString().ToLowerInvariant()} ");
 
             if (nodeType == NodeType.MainChain)
@@ -144,13 +143,10 @@ namespace MasternodeSetupTool
 
             Status($"Starting the {nodeType} node on {this.networkType}. Start up arguments: {argumentBuilder}");
 
-            string osSpecificCommand = "CMD.EXE";
-            string osSpecificArguments = $"/K \"{argumentBuilder}\"";
-
             var startInfo = new ProcessStartInfo
             {
-                Arguments = osSpecificArguments,
-                FileName = osSpecificCommand,
+                FileName = "Stratis.CirrusMinerD.exe",
+                Arguments = argumentBuilder.ToString(),
                 UseShellExecute = true,
                 WindowStyle = ProcessWindowStyle.Minimized,
                 WorkingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CirrusMinerD"))
@@ -161,7 +157,7 @@ namespace MasternodeSetupTool
 
             if (process != null && process.HasExited)
             {
-                Status($"{nodeType} node process failed to start, exiting...");
+                Error($"{nodeType} node process failed to start, exiting...");
 
                 return false;
             }
