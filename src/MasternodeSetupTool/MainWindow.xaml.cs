@@ -10,6 +10,7 @@ using System.Windows.Threading;
 using CSharpFunctionalExtensions;
 using NBitcoin;
 using Stratis.Bitcoin.Features.Wallet.Models;
+using static MasternodeSetupTool.RegistrationService;
 using Color = System.Windows.Media.Color;
 
 namespace MasternodeSetupTool
@@ -652,7 +653,6 @@ namespace MasternodeSetupTool
         {
             string? mnemonic;
 
-            // The only material difference is that the user needs to supply their own mnemonic; so just retrieve it via an input dialog and then jump back into the Create sub-branch.
             do
             {
                 var inputBox = new InputBox($"Please enter your mnemonic for the {WalletTypeName(nodeType)} ({nodeType}) wallet", "Mnemonic");
@@ -772,16 +772,32 @@ namespace MasternodeSetupTool
                 ? this.collateralWalletPassword
                 : this.miningWalletPassword;
 
-
-            //TODO: ask for a new wallet name if default one is present already
-            if (walletName == null 
-                || walletMnemonic == null 
-                || walletPassphrase == null 
-                || walletPassword == null 
-                || !await this.registrationService.RestoreWalletAsync(network.DefaultAPIPort, nodeType, walletName, walletMnemonic, walletPassphrase, walletPassword).ConfigureAwait(true))
+            while (true)
             {
-                LogError($"Cannot restore {WalletTypeName(nodeType)} wallet, aborting...");
-                return false;
+                try
+                {
+                    if (walletName == null
+                        || walletMnemonic == null
+                        || walletPassphrase == null
+                        || walletPassword == null
+                        || !await this.registrationService.RestoreWalletAsync(network.DefaultAPIPort, nodeType, walletName, walletMnemonic, walletPassphrase, walletPassword).ConfigureAwait(true))
+                    {
+                        LogError($"Cannot restore {WalletTypeName(nodeType)} wallet, aborting...");
+                        return false;
+                    }
+                    break;
+                }
+                catch (WalletCollisionException)
+                {
+                    LogError($"The {WalletTypeName(nodeType)} wallet with this mnemonic already exists.");
+                    LogError("Please provide a new mnemonic.");
+
+                    if (!HandleNewMnemonic(nodeType))
+                    {
+                        LogError("New mnemonic was not provided. Aborting...");
+                        return false;
+                    }
+                }
             }
 
             if (!await this.registrationService.ResyncWalletAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
