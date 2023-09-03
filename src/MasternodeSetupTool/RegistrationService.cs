@@ -114,7 +114,7 @@ namespace MasternodeSetupTool
         {
             if (await CheckNodeIsRunningAsync(apiPort))
             {
-                Status($"{nodeType} is already running. We will shutdown and rerun it.");
+                Status($"{nodeType} node is already running. We will shutdown and rerun it.");
                 await ShutdownNodeAsync(nodeType, apiPort);
                 await Task.Delay(TimeSpan.FromSeconds(2));
             }
@@ -391,6 +391,10 @@ namespace MasternodeSetupTool
                     .AppendPathSegment("wallet/recover")
                     .PostJsonAsync(walletRecoveryRequest);
             }
+            catch (FlurlHttpException httpException) when (httpException.StatusCode == 409)
+            {
+                throw new WalletCollisionException();
+            }
             catch (Exception ex)
             {
                 Error($"ERROR: An exception occurred trying to recover your {nodeType} wallet.", ex);
@@ -413,6 +417,8 @@ namespace MasternodeSetupTool
 
             return true;
         }
+
+        public class WalletCollisionException: Exception { }
 
         public async Task<bool> ResyncWalletAsync(int apiPort, string walletName)
         {
