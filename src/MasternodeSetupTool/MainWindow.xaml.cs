@@ -377,9 +377,14 @@ namespace MasternodeSetupTool
             if (this.currentState == "Setup_CreateRestoreUseExisting_CheckForCollateral")
             {
                 if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, RegistrationService.CollateralRequirement).ConfigureAwait(true))
+                {
                     this.nextState = "Setup_CreateRestoreUseExisting_CheckForRegistrationFee";
+                }
                 else
+                {
                     Log($"Waiting for collateral wallet to have a balance of at least {RegistrationService.CollateralRequirement} STRAX", updateTag: this.currentState);
+                    this.nextState = "Setup_CreateRestoreUseExisting_CheckForCollateral";
+                }
             }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_CheckForRegistrationFee")
@@ -409,11 +414,15 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer")
             {
-                Log("Waiting for registration fee to be sent via cross-chain transfer...", updateTag: this.currentState);
 
                 if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(true))
                 {
                     this.nextState = "Setup_CreateRestoreUseExisting_PerformRegistration";
+                } 
+                else
+                {
+                    Log("Waiting for registration fee to be sent via cross-chain transfer...", updateTag: this.currentState);
+                    this.nextState = "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer";
                 }
             }
 
