@@ -419,7 +419,13 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_PerformRegistration")
             {
-                await this.registrationService.CallJoinFederationRequestAsync(this.collateralAddress, this.collateralWalletName, this.collateralWalletPassword, this.miningWalletName, this.miningWalletPassword).ConfigureAwait(true);
+                bool registeredSuccessfully = await this.registrationService.CallJoinFederationRequestAsync(this.collateralAddress, this.collateralWalletName, this.collateralWalletPassword, this.miningWalletName, this.miningWalletPassword).ConfigureAwait(true);
+                if (!registeredSuccessfully)
+                {
+                    Error("Failed to register your masternode, aborting...");
+                    ResetState();
+                    return true;
+                }
 
                 this.nextState = "Setup_CreateRestoreUseExisting_WaitForRegistration";
             }

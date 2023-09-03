@@ -640,7 +640,15 @@ namespace MasternodeSetupTool
                 .AppendPathSegment("node/status")
                 .GetJsonAsync<StatusModel>().ConfigureAwait(false);
 
-            Status($"Expecting registration to complete at block height {memberInfo.MemberWillStartMiningAtBlockHeight}");
+            long? targetHeight = memberInfo.MemberWillStartMiningAtBlockHeight;
+            if (targetHeight != null)
+            {
+                Status($"Expecting registration to complete at block height {memberInfo.MemberWillStartMiningAtBlockHeight}");
+            }
+            else
+            {
+                Status($"Waiting for registration to complete...");
+            }
 
             return (blockModel.ConsensusHeight >= memberInfo.MemberWillStartMiningAtBlockHeight);
         }
