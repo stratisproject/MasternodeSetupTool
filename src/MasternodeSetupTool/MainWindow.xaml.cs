@@ -640,11 +640,11 @@ namespace MasternodeSetupTool
             return true;
         }
 
-        private bool HandleNewMnemonic(NodeType nodeType)
+        private bool HandleNewMnemonic(NodeType nodeType, bool canChangeMnemonic = false)
         {
             var mnemonic = string.Join(' ', new Mnemonic("English", WordCount.Twelve).Words);
 
-            var dialog = new ConfirmationDialog($"Enter mnemonic for the {WalletTypeName(nodeType)} wallet", "Mnemonic", mnemonic, false);
+            var dialog = new ConfirmationDialog($"Enter mnemonic for the {WalletTypeName(nodeType)} wallet", "Mnemonic", mnemonic, canChangeMnemonic);
             dialog.ShowDialog();
 
             if (dialog.DialogResult != true)
@@ -808,7 +808,7 @@ namespace MasternodeSetupTool
                     LogError($"The {WalletTypeName(nodeType)} wallet with this mnemonic already exists.");
                     LogError("Please provide a new mnemonic.");
 
-                    if (!HandleNewMnemonic(nodeType))
+                    if (!HandleNewMnemonic(nodeType, canChangeMnemonic: true))
                     {
                         LogError("New mnemonic was not provided. Aborting...");
                         return false;
