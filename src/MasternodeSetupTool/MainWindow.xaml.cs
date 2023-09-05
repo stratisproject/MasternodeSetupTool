@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -75,6 +76,13 @@ namespace MasternodeSetupTool
         public MainWindow(string[] args)
         {
             InitializeComponent();
+
+            string? appVersion = GetInformationalVersion();
+
+            if (appVersion != null)
+            {
+                this.VersionText.Text = $"Version: {appVersion}";
+            }
 
             this.stackPanel = (StackPanel)this.FindName(MainStackPanelTag);
             this.statusBar = (TextBlock)this.FindName(StatusBarTextBlockTag);
@@ -1022,5 +1030,11 @@ namespace MasternodeSetupTool
         {
             return nodeType == NodeType.MainChain ? "collateral" : "mining";
         }
+
+        public static string? GetInformationalVersion() =>
+            Assembly
+                .GetExecutingAssembly()
+                ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                ?.InformationalVersion;
     }
 }

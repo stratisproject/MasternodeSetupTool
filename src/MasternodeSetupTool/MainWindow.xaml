@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MasternodeSetupTool"
         mc:Ignorable="d"
         Title="Stratis Masternode Setup Tool" Name="MainWindowControl" Height="450" Width="800">
 
@@ -34,6 +35,8 @@
         </ScrollViewer>
 
         <StackPanel Grid.Column="1" Grid.Row="1" Name="Main" Orientation="Horizontal" HorizontalAlignment="Center" />
+
+        <TextBlock Grid.Column="0" Grid.Row="1" Name="VersionText" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10" Visibility="{x:Static local:DebugVisibility.DebugOnly}"/>
 
     </Grid>
 
