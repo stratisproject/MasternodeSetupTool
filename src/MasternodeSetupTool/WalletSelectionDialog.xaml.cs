@@ -38,26 +38,5 @@ namespace MasternodeSetupTool
                 Close();
             }
         }
-
-        public class WalletItem
-        {
-            public string Name { get; set; }
-
-            public WalletItem(string name, long balance)
-            {
-                this.Name = name;
-                this.Balance = balance;
-            }
-
-            public long Balance { get; set; }
-
-            public string BalanceFormatted
-            {
-                get
-                {
-                    return $"{this.Balance}";
-                }
-            }
-        }
     }
 }

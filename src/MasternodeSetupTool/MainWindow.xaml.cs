@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
@@ -561,37 +562,57 @@ namespace MasternodeSetupTool
         private async Task<bool> HandleExistingWalletNameAsync(NodeType nodeType)
         {
             string? walletName;
-            do
+
+            Network network = nodeType == NodeType.MainChain
+                ? this.registrationService.MainchainNetwork
+                : this.registrationService.SidechainNetwork;
+
+            List<WalletItem>? wallesWithBalance = await this.registrationService.GetWalletsWithBalanceAsync(network.DefaultAPIPort);
+
+            if (wallesWithBalance != null)
             {
-                var inputBox = new InputBox($"Please enter your {WalletTypeName(nodeType)} ({nodeType}) wallet name:");
-
-                walletName = inputBox.ShowDialog();
-
-                if (walletName == null)
+                var selectionDialog = new WalletSelectionDialog(wallesWithBalance);
+                selectionDialog.ShowDialog();
+                
+                if (selectionDialog.SelectedWalletName != null)
+                {
+                    walletName = selectionDialog.SelectedWalletName;
+                }
+                else
                 {
                     return false;
                 }
-
-                if (!string.IsNullOrEmpty(walletName))
+            }
+            else
+            {
+                do
                 {
-                    try
-                    {
-                        Network network = nodeType == NodeType.MainChain
-                            ? this.registrationService.MainchainNetwork
-                            : this.registrationService.SidechainNetwork;
+                    var inputBox = new InputBox($"Please enter your {WalletTypeName(nodeType)} ({nodeType}) wallet name:");
 
-                        if (await this.registrationService.FindWalletByNameAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
+                    walletName = inputBox.ShowDialog();
+
+                    if (walletName == null)
+                    {
+                        return false;
+                    }
+
+                    if (!string.IsNullOrEmpty(walletName))
+                    {
+                        try
                         {
-                            break;
+                            if (await this.registrationService.FindWalletByNameAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
+                            {
+                                break;
+                            }
+                        }
+                        catch
+                        {
                         }
                     }
-                    catch
-                    {
-                    }
-                }
 
-                MessageBox.Show($"Please ensure that you enter a valid {WalletTypeName(nodeType)} ({nodeType}) wallet name", "Error", MessageBoxButton.OK);
-            } while (true);
+                    MessageBox.Show($"Please ensure that you enter a valid {WalletTypeName(nodeType)} ({nodeType}) wallet name", "Error", MessageBoxButton.OK);
+                } while (true);
+            }
 
             if (nodeType == NodeType.MainChain)
             {

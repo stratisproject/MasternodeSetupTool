@@ -415,6 +415,38 @@ namespace MasternodeSetupTool
             return true;
         }
 
+        public async Task<List<WalletItem>?> GetWalletsWithBalanceAsync(int apiPort)
+        {
+            try
+            {
+                WalletInfoModel walletInfoModel = await $"http://localhost:{apiPort}/api"
+                    .AppendPathSegment("wallet/list-wallets")
+                    .GetJsonAsync<WalletInfoModel>();
+
+                IEnumerable<Task<WalletItem>> getBalanceTasks = walletInfoModel.WalletNames.Select(walletName => GetWalletBalanceAsync(walletName, apiPort));
+
+                WalletItem[] balances = await Task.WhenAll(getBalanceTasks);
+
+                return balances.ToList();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<WalletItem> GetWalletBalanceAsync(string walletName, int apiPort)
+        {
+            var walletBalanceRequest = new WalletBalanceRequest() { WalletName = walletName };
+
+            WalletBalanceModel walletBalanceModel = await $"http://localhost:{apiPort}/api"
+                .AppendPathSegment("wallet/balance")
+                .SetQueryParams(walletBalanceRequest)
+                .GetJsonAsync<WalletBalanceModel>().ConfigureAwait(false);
+
+            return new WalletItem(name: walletName, balance: walletBalanceModel.AccountsBalances[0].SpendableAmount);
+        }
+
         public class WalletCollisionException: Exception { }
 
         public async Task<bool> ResyncWalletAsync(int apiPort, string walletName)
