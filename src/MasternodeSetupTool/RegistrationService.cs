@@ -116,7 +116,7 @@ namespace MasternodeSetupTool
             {
                 Status($"{nodeType} node is already running. We will shutdown and rerun it.");
                 await ShutdownNodeAsync(nodeType, apiPort);
-                await Task.Delay(TimeSpan.FromSeconds(2));
+                await Task.Delay(TimeSpan.FromSeconds(5));
             }
 
             var argumentBuilder = new StringBuilder();

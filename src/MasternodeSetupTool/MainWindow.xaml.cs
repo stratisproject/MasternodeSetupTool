@@ -184,7 +184,11 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Run_StartMainChain")
             {
-                await this.registrationService.StartNodeAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
+                if (!await this.registrationService.StartNodeAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true))
+                {
+                    Error("Cannot start the Mainchain node, aborting...");
+                    return false;
+                }
 
                 this.nextState = "Run_MainChainSynced";
             }
@@ -200,7 +204,11 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Run_StartSideChain")
             {
-                await this.registrationService.StartNodeAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
+                if (!await this.registrationService.StartNodeAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true))
+                {
+                    Error("Cannot start the Mainchain node, aborting...");
+                    return false;
+                }
 
                 this.nextState = "Run_SideChainSynced";
             }
