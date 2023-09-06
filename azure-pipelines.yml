@@ -37,6 +37,10 @@ steps:
       cd "$(minerProjectPath)"
       dotnet build
 
+- task: CmdLine@2
+  inputs:
+    script: 'set InformationalVersion="$(fullVersion)"'
+
 - task: Bash@3
   displayName: Build Masternode Setup Tool
   inputs:
