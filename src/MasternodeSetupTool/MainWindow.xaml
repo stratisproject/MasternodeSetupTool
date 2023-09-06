@@ -36,7 +36,7 @@
 
         <StackPanel Grid.Column="1" Grid.Row="1" Name="Main" Orientation="Horizontal" HorizontalAlignment="Center" />
 
-        <TextBlock Grid.Column="0" Grid.Row="1" Name="VersionText" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10" Visibility="{x:Static local:DebugVisibility.DebugOnly}"/>
+        <TextBlock Grid.Column="0" Grid.Row="1" Name="VersionText" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10"/>
 
     </Grid>
 
