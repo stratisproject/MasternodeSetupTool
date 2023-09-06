@@ -21,18 +21,18 @@ variables:
   disableToolPath: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\VSI\DisableOutOfProcBuild'
 
 steps:
-- checkout: self
-  submodules: 'recursive'
 
 - task: PowerShell@2
   displayName: Create Version Number
   inputs:
     targetType: 'inline'
     script: |
-      $bv = "$major.$minor.$patch"
+      $bv = "$env:MajorVersion.$env:MinorVersion.$env:PatchVersion"
       Write-Host "##vso[task.setvariable variable=buildVersion]$bv"
       Write-Host "Version of .NET app : $bv"
-    arguments: '-major $(MajorVersion) -minor $(MinorVersion) -patch $(PatchVersion)'
+
+- checkout: self
+  submodules: 'recursive'
 
 - task: NuGetToolInstaller@1
 
