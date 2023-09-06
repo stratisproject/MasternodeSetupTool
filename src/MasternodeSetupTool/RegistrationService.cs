@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using Flurl;
 using Flurl.Http;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using LiteDB;
 using NBitcoin;
 using NBitcoin.DataEncoders;
 using Newtonsoft.Json;
@@ -31,6 +32,8 @@ namespace MasternodeSetupTool
         public const int CollateralRequirement = 100_000;
         public const int FeeRequirement = 500;
         public const int DashboardPort = 5000;
+
+        public const int CollateralMinConfirmations = 500;
 
         private NetworkType networkType;
         private Network mainchainNetwork;
@@ -329,6 +332,7 @@ namespace MasternodeSetupTool
 
                 AddressesModel addresses = await $"http://localhost:{apiPort}/api"
                     .AppendPathSegment("wallet/addresses")
+                    .WithTimeout(TimeSpan.FromSeconds(3))
                     .SetQueryParams(addressesRequest)
                     .GetJsonAsync<AddressesModel>().ConfigureAwait(false);
 
@@ -353,6 +357,40 @@ namespace MasternodeSetupTool
                     .GetJsonAsync<WalletBalanceModel>().ConfigureAwait(false);
 
                 if (walletBalanceModel.AccountsBalances[0].SpendableAmount / 100000000 >= amountToCheck)
+                {
+                    Status($"SUCCESS: The wallet '{walletName}' contains the required amount of {amountToCheck}.");
+                    return true;
+                }
+
+                Error($"ERROR: The wallet '{walletName}' does not contain the required amount of {amountToCheck}.");
+            }
+            catch (Exception ex)
+            {
+                Error($"ERROR: An exception occurred trying to check the wallet balance.", ex);
+            }
+
+            return false;
+        }
+
+        public async Task<bool> CheckWalletBalanceWithConfirmationsAsync(int apiPort, string walletName, int amountToCheck, int requiredConfirmations)
+        {
+            try
+            {
+                string? address = await GetFirstWalletAddressAsync(apiPort, walletName);
+                if (address == null)
+                {
+                    Error($"Can't find first address of the wallet {walletName}");
+                    return false;
+                }
+
+                AddressBalancesResult addressBalancesResult = await $"http://localhost:{apiPort}/api"
+                    .AppendPathSegment("BlockStore/getaddressesbalances")
+                    .SetQueryParams(new Dictionary<string, object> {
+                        { "addresses", address },
+                        { "minConfirmations", requiredConfirmations } })
+                    .GetJsonAsync<AddressBalancesResult>();
+
+                if (addressBalancesResult.Balances[0].Balance / 100000000 >= amountToCheck)
                 {
                     Status($"SUCCESS: The wallet '{walletName}' contains the required amount of {amountToCheck}.");
                     return true;
