@@ -5,6 +5,8 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <Version Condition="'$(buildVersion)' != ''">$(buildVersion)</Version>
+    <Version Condition="'$(buildVersion)' == ''">1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
