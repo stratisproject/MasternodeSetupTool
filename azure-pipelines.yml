@@ -59,6 +59,11 @@ steps:
     filename: '"$(disableToolPath)\DisableOutOfProcBuild.exe"'
     workingFolder: '"$(disableToolPath)"'
 
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: 'sed -i ''s/"ProductVersion" = "8:1.0.0"/"ProductVersion" = "8:$(buildVersion)"/'' $(installerProject)'
+
 - script: '"$(devCmd)" "$(solution)" /Build "$(buildConfiguration)" /Project "$(installerProject)"'
   displayName: Build Installer
 
