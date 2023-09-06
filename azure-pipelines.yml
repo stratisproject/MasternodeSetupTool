@@ -29,7 +29,6 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      param($major, $minor, $patch)
       $bv = "$major.$minor.$patch"
       Write-Host "##vso[task.setvariable variable=buildVersion]$bv"
       Write-Host "Version of .NET app : $bv"
