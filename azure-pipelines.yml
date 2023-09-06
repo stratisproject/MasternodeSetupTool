@@ -27,13 +27,13 @@ steps:
 - task: PowerShell@2
   displayName: Create Version Number
   inputs:
-    arguments: '-major $(MajorVersion) -minor $(MinorVersion) -patch $(PatchVersion)'
     targetType: 'inline'
     script: |
       param($major, $minor, $patch)
       $bv = "$major.$minor.$patch"
       Write-Host "##vso[task.setvariable variable=buildVersion]$bv"
       Write-Host "Version of .NET app : $bv"
+    arguments: '-major $(MajorVersion) -minor $(MinorVersion) -patch $(PatchVersion)'
 
 - task: NuGetToolInstaller@1
 
