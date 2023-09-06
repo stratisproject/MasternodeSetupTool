@@ -1,7 +1,7 @@
 [submodule "StratisFullNode"]
 	path = StratisFullNode
 	url = https://github.com/stratisproject/StratisFullNode.git
-	branch = release/1.4.0.7
+	branch = feature/1.5.0.0-interflux
 [submodule "StratisMasternodeDashboard"]
 	path = StratisMasternodeDashboard
 	url = https://github.com/stratisproject/StratisMasternodeDashboard
