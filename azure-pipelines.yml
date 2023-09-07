@@ -62,7 +62,7 @@ steps:
 - task: Bash@3
   inputs:
     targetType: 'inline'
-    script: 'sed -i ''s/"ProductVersion" = "8:1.0.0"/"ProductVersion" = "8:$(buildVersion)"/'' $(System.DefaultWorkingDirectory)/src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj'
+    script: 'sed -i ''s/"ProductVersion" = "8:1.0.0"/"ProductVersion" = "8:$(buildVersion)"/'' src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj'
 
 - script: '"$(devCmd)" "$(solution)" /Build "$(buildConfiguration)" /Project "$(installerProject)"'
   displayName: Build Installer
