@@ -62,14 +62,14 @@ steps:
 - task: Bash@3
   inputs:
     targetType: 'inline'
-    script: 'sed -i ''s/"ProductVersion" = "8:1.0.0"/"ProductVersion" = "8:$(buildVersion)"/'' $(installerProject)'
+    script: 'sed -i ''s/"ProductVersion" = "8:1.0.0"/"ProductVersion" = "8:$(buildVersion)"/'' $(System.DefaultWorkingDirectory)/src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj'
 
 - script: '"$(devCmd)" "$(solution)" /Build "$(buildConfiguration)" /Project "$(installerProject)"'
   displayName: Build Installer
 
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(installerProjectPath)/$(buildConfiguration)/*.msi'
+    rootFolderOrFile: '$(installerProjectPath)\$(buildConfiguration)\*.msi'
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/MasternodeSetupTool-$(buildVersion).zip'
     replaceExistingArchive: true
