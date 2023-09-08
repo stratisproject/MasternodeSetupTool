@@ -696,6 +696,22 @@ namespace MasternodeSetupTool
             }
         }
 
+        public async Task<bool> CheckIsFederationMemberAsync()
+        {
+            try
+            {
+                FederationMemberDetailedModel memberInfo = await $"http://localhost:{this.sidechainNetwork.DefaultAPIPort}/api"
+                    .AppendPathSegment("federation/members/current")
+                    .GetJsonAsync<FederationMemberDetailedModel>().ConfigureAwait(false);
+
+                return memberInfo != null && memberInfo.CollateralAddress != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public async Task<bool> MonitorJoinFederationRequestAsync()
         {
             FederationMemberDetailedModel memberInfo = await $"http://localhost:{this.sidechainNetwork.DefaultAPIPort}/api"

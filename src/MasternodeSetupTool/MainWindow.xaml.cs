@@ -326,6 +326,26 @@ namespace MasternodeSetupTool
 
                 await this.registrationService.EnsureNodeIsSyncedAsync(NodeType.SideChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
+                this.nextState = "Setup_CreateRestoreUseExisting_CheckIsFederationMember";
+            }
+
+            if (this.currentState == "Setup_CreateRestoreUseExisting_CheckIsFederationMember")
+            {
+                if (await this.registrationService.CheckIsFederationMemberAsync().ConfigureAwait(true))
+                {
+                    if (MessageBox.Show("Your node is already a member of a federation. Do you want to run the Masternode Dashboard instead?", "Member of a federation", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
+                    {
+                        this.nextState = "Run_LaunchBrowser";
+                        return true;
+                    }
+                    else
+                    {
+                        Info("Your node is already a member of a federation. Consider using 'Run Masternode' instead.");
+                        ResetState();
+                        return true;
+                    }
+                }
+
                 this.nextState = "Setup_CreateRestoreUseExisting_Select";
             }
 
