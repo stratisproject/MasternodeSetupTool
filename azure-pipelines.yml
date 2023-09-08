@@ -72,7 +72,7 @@ steps:
     script: |
       # Replace UUID in a specified file
       
-      $filePath = src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj
+      $filePath = "src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj"
       
       # Check if the file exists
       if (-not (Test-Path $filePath)) {
