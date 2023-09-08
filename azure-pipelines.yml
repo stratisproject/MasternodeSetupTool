@@ -60,9 +60,39 @@ steps:
     workingFolder: '"$(disableToolPath)"'
 
 - task: Bash@3
+  displayName: Update ProductVersion
   inputs:
     targetType: 'inline'
     script: 'sed -i ''s/"ProductVersion" = "8:1.0.0"/"ProductVersion" = "8:$(buildVersion)"/'' src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj'
+
+- task: PowerShell@2
+  displayName: Update ProductRevision
+  inputs:
+    targetType: 'inline'
+    script: |
+      # Replace UUID in a specified file
+      
+      $filePath = src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj
+      
+      # Check if the file exists
+      if (-not (Test-Path $filePath)) {
+          Write-Error "File not found: $filePath"
+          exit 1
+      }
+      
+      # Generate a new UUID
+      $newUUID = [guid]::NewGuid().ToString()
+      
+      # Read the file content
+      $content = Get-Content $filePath -Raw
+      
+      # Replace the UUID in the "ProductRevision" string
+      $updatedContent = $content -replace '(?<=ProductRevision" = "8:{)(^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$)', $newUUID
+      
+      # Save the updated content back to the file
+      $updatedContent | Set-Content $filePath
+      
+      Write-Output "UUID replaced successfully!"
 
 - script: '"$(devCmd)" "$(solution)" /Build "$(buildConfiguration)" /Project "$(installerProject)"'
   displayName: Build Installer
