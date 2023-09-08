@@ -10,11 +10,11 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupTool.sln'
-  toolProjectPath: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupTool'
-  minerProjectPath: '$(System.DefaultWorkingDirectory)/StratisFullNode/src/Stratis.CirrusMinerD'
-  installerProjectPath: '$(System.DefaultWorkingDirectory)/src/MasternodeSetupToolInstaller'
-  installerProject: '$(installerProjectPath)/MasternodeSetupToolInstaller.vdproj'
+  solution: '$(System.DefaultWorkingDirectory)\src\MasternodeSetupTool.sln'
+  toolProjectPath: '$(System.DefaultWorkingDirectory)\src\MasternodeSetupTool'
+  minerProjectPath: '$(System.DefaultWorkingDirectory)\StratisFullNode\src\Stratis.CirrusMinerD'
+  installerProjectPath: '$(System.DefaultWorkingDirectory)\src\MasternodeSetupToolInstaller'
+  installerProject: '$(installerProjectPath)\MasternodeSetupToolInstaller.vdproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   devCmd: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\devenv.com'
@@ -59,12 +59,17 @@ steps:
     filename: '"$(disableToolPath)\DisableOutOfProcBuild.exe"'
     workingFolder: '"$(disableToolPath)"'
 
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: 'sed -i ''s/"ProductVersion" = "8:1.0.0"/"ProductVersion" = "8:$(buildVersion)"/'' src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj'
+
 - script: '"$(devCmd)" "$(solution)" /Build "$(buildConfiguration)" /Project "$(installerProject)"'
   displayName: Build Installer
 
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(installerProjectPath)/$(buildConfiguration)/*.msi'
+    rootFolderOrFile: '$(installerProjectPath)\$(buildConfiguration)\*.msi'
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/MasternodeSetupTool-$(buildVersion).zip'
     replaceExistingArchive: true
