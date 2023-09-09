@@ -405,7 +405,7 @@ namespace MasternodeSetupTool
             {
                 this.collateralAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true);
 
-                MessageBox.Show($"Your collateral address is: {this.collateralAddress}", "Collateral Address", MessageBoxButton.OK);
+                new ShowAddressDialog(NodeType.MainChain, this.collateralAddress).ShowDialog();
 
                 // The 3 sub-branches recombine after this and can share common states.
                 this.nextState = "Setup_CreateRestoreUseExisting_CheckForCollateral";
