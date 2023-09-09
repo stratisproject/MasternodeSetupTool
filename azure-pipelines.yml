@@ -90,8 +90,8 @@ steps:
       Write-Output $content
 
       # Replace the UUID in the "ProductCode" and "PackageCode" strings
-      $updatedContent = $content -replace '(?<=ProductCode" = "8:{)(^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$)', $newProductCode
-      $updatedContent = $content -replace '(?<=PackageCode" = "8:{)(^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$)', $newPackageCode
+      $updatedContent = $content -replace '(?<=ProductCode" = "8:{)([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})', $newProductCode
+      $updatedContent = $content -replace '(?<=PackageCode" = "8:{)([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})', $newPackageCode
 
       # Save the updated content back to the file
       $updatedContent | Set-Content $filePath
