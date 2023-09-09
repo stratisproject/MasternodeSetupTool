@@ -66,12 +66,10 @@ steps:
     script: 'sed -i ''s/"ProductVersion" = "8:1.0.0"/"ProductVersion" = "8:$(buildVersion)"/'' src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj'
 
 - task: PowerShell@2
-  displayName: Update ProductRevision
+  displayName: Update ProductCode and PackageCode
   inputs:
     targetType: 'inline'
-    script: |
-      # Replace UUID in a specified file
-      
+    script: |    
       $filePath = "src/MasternodeSetupToolInstaller/MasternodeSetupToolInstaller.vdproj"
       
       # Check if the file exists
@@ -81,17 +79,27 @@ steps:
       }
       
       # Generate a new UUID
-      $newUUID = [guid]::NewGuid().ToString()
-      
+      $newProductCode = [guid]::NewGuid().ToString()
+      $newPackageCode = [guid]::NewGuid().ToString()
+
       # Read the file content
       $content = Get-Content $filePath -Raw
       
-      # Replace the UUID in the "ProductRevision" string
-      $updatedContent = $content -replace '(?<=ProductRevision" = "8:{)(^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$)', $newUUID
-      
+      Write-Output "Previous version of content:"
+      Write-Output "============================"
+      Write-Output $content
+
+      # Replace the UUID in the "ProductCode" and "PackageCode" strings
+      $updatedContent = $content -replace '(?<=ProductCode" = "8:{)(^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$)', $newProductCode
+      $updatedContent = $content -replace '(?<=PackageCode" = "8:{)(^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$)', $newPackageCode
+
       # Save the updated content back to the file
       $updatedContent | Set-Content $filePath
       
+      Write-Output "New version of content:"
+      Write-Output "============================"
+      Write-Output $updatedContent
+
       Write-Output "UUID replaced successfully!"
 
 - script: '"$(devCmd)" "$(solution)" /Build "$(buildConfiguration)" /Project "$(installerProject)"'
