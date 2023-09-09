@@ -79,8 +79,8 @@ steps:
       }
       
       # Generate a new UUID
-      $newProductCode = [guid]::NewGuid().ToString()
-      $newPackageCode = [guid]::NewGuid().ToString()
+      $newProductCode = [guid]::NewGuid().ToString().ToUpper()
+      $newPackageCode = [guid]::NewGuid().ToString().ToUpper()
 
       # Read the file content
       $content = Get-Content $filePath -Raw
