@@ -332,7 +332,6 @@ namespace MasternodeSetupTool
 
                 AddressesModel addresses = await $"http://localhost:{apiPort}/api"
                     .AppendPathSegment("wallet/addresses")
-                    .WithTimeout(TimeSpan.FromSeconds(3))
                     .SetQueryParams(addressesRequest)
                     .GetJsonAsync<AddressesModel>().ConfigureAwait(false);
 
@@ -466,6 +465,43 @@ namespace MasternodeSetupTool
                 WalletItem[] balances = await Task.WhenAll(getBalanceTasks);
 
                 return balances.ToList();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<bool?> CheckWalletPasswordAsync(int apiPort, string walletName, string walletPassword)
+        {
+            try
+            {
+                WalletLoadRequest request = new WalletLoadRequest()
+                {
+                    Name = walletName,
+                    Password = walletPassword
+                };
+
+                IFlurlResponse response = await $"http://localhost:{apiPort}/api"
+                    .AppendPathSegment("wallet/load")
+                    .PostJsonAsync(request);
+
+                if (response != null)
+                {
+                    if (response.StatusCode == 200)
+                    {
+                        return true;
+                    }
+                    else if (response.StatusCode == 403)
+                    {
+                        return false;
+                    }
+                }
+                return null;
+            }
+            catch (FlurlHttpException e) when (e.StatusCode == 403)
+            {
+                return false;
             }
             catch
             {

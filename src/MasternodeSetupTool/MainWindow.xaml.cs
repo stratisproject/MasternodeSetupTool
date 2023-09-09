@@ -520,7 +520,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_CollateralPassword")
             {
-                if (!HandlePassword(NodeType.MainChain))
+                if (!await HandlePasswordAsync(NodeType.MainChain))
                 {
                     this.nextState = "Setup_CreateRestoreUseExisting_Select";
                     return true;
@@ -542,7 +542,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_MiningPassword")
             {
-                if (!HandlePassword(NodeType.SideChain))
+                if (!await HandlePasswordAsync(NodeType.SideChain))
                 {
                     this.nextState = "Setup_CreateRestoreUseExisting_Select";
                     return true;
@@ -795,31 +795,56 @@ namespace MasternodeSetupTool
             return true;
         }
 
-        private bool HandlePassword(NodeType nodeType)
+        private async Task<bool> HandlePasswordAsync(NodeType nodeType)
         {
-            var dialog = new ConfirmationDialog(
-                $"Enter {WalletTypeName(nodeType)} wallet password ({nodeType})", 
-                "Password", 
-                "", 
+            while (true)
+            {
+                var dialog = new ConfirmationDialog(
+                $"Enter {WalletTypeName(nodeType)} wallet password ({nodeType})",
+                "Password",
+                "",
                 true);
 
-            dialog.ShowDialog();
+                dialog.ShowDialog();
 
-            if (dialog.DialogResult != true)
-            {
-                return false;
-            }
+                if (dialog.DialogResult != true)
+                {
+                    return false;
+                }
 
-            if (nodeType == NodeType.MainChain)
-            {
-                this.collateralWalletPassword = dialog.Text2.Text;
-            }
-            else
-            {
-                this.miningWalletPassword = dialog.Text2.Text;
-            }
+                string password = dialog.Text2.Text ?? string.Empty;
 
-            return true;
+                string walletName;
+                if (nodeType == NodeType.MainChain)
+                {
+                    walletName = this.collateralWalletName ?? "";
+                }
+                else
+                {
+                    walletName = this.miningWalletName ?? "";
+                }
+
+                if (await this.registrationService.CheckWalletPasswordAsync(NodeApiPort(nodeType), walletName, password) == false)
+                {
+                    if (MessageBox.Show("The password you entered is incorrect. Do you want to enter it again?", "Incorrect password", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.No)
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (nodeType == NodeType.MainChain)
+                {
+                    this.collateralWalletPassword = dialog.Text2.Text;
+                }
+                else
+                {
+                    this.miningWalletPassword = dialog.Text2.Text;
+                }
+
+                return true;
+            }
         }
 
         private async Task<bool> HandleWalletCreationAsync(NodeType nodeType, bool createNewWallet)
@@ -940,7 +965,7 @@ namespace MasternodeSetupTool
                 return false;
             }
 
-            if (!HandlePassword(nodeType))
+            if (!await HandlePasswordAsync(nodeType))
             {
                 return false;
             }
@@ -1070,6 +1095,12 @@ namespace MasternodeSetupTool
         private string WalletTypeName(NodeType nodeType)
         {
             return nodeType == NodeType.MainChain ? "collateral" : "mining";
+        }
+
+        private int NodeApiPort(NodeType nodeType)
+        {
+            Network network = nodeType == NodeType.MainChain ? this.registrationService.MainchainNetwork : this.registrationService.SidechainNetwork;
+            return network.DefaultAPIPort;
         }
 
         public static string? GetInformationalVersion() =>
