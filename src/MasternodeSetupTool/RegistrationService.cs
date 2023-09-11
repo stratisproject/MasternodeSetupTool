@@ -323,19 +323,19 @@ namespace MasternodeSetupTool
         {
             try
             {
-                var addressesRequest = new GetAllAddressesModel
+                var walletBalanceRequest = new WalletBalanceRequest
                 {
                     WalletName = walletName,
                     AccountName = "account 0",
-                    Segwit = false
+                    IncludeBalanceByAddress = true
                 };
 
-                AddressesModel addresses = await $"http://localhost:{apiPort}/api"
-                    .AppendPathSegment("wallet/addresses")
-                    .SetQueryParams(addressesRequest)
-                    .GetJsonAsync<AddressesModel>().ConfigureAwait(false);
+                WalletBalanceModel walletBalanceModel = await $"http://localhost:{apiPort}/api"
+                    .AppendPathSegment("wallet/balance")
+                    .SetQueryParams(walletBalanceRequest)
+                    .GetJsonAsync<WalletBalanceModel>().ConfigureAwait(false);
 
-                return addresses.Addresses.First().Address;
+                return walletBalanceModel.AccountsBalances.FirstOrDefault()?.Addresses.FirstOrDefault()?.Address;
             }
             catch (Exception ex)
             {
