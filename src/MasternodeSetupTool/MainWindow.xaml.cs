@@ -421,7 +421,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_CheckForCollateral")
             {
-                if (await this.registrationService.CheckWalletBalanceWithConfirmationsAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, RegistrationService.CollateralRequirement, RegistrationService.CollateralMinConfirmations).ConfigureAwait(true))
+                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, RegistrationService.CollateralRequirement).ConfigureAwait(true))
                 {
                     this.nextState = "Setup_CreateRestoreUseExisting_CheckForRegistrationFee";
                 }
