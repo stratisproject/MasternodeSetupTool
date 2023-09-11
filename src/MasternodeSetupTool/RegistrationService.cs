@@ -97,7 +97,7 @@ namespace MasternodeSetupTool
 
         private void Status(string message, string? updateTag = null)
         {
-            this.logger.Info(message);
+            this.logger.Info(message, updateTag);
         }
 
         private void Error(string message)
@@ -238,6 +238,37 @@ namespace MasternodeSetupTool
             return initialized;
         }
 
+        public async Task<bool> EnsureBlockstoreIsSyncedAsync(NodeType nodeType, int apiPort)
+        {
+            string logTag = Guid.NewGuid().ToString();
+
+            do
+            {
+                try
+                {
+                    IFlurlResponse response = await $"http://localhost:{apiPort}/api"
+                        .AppendPathSegment("blockStore/getblockcount")
+                        .GetAsync();
+
+                    if (response.StatusCode == 200)
+                    {
+                        Status($"{nodeType} node finished loading blocks", updateTag: logTag);
+                        return true;
+                    }
+                }
+                catch
+                {
+
+                }
+
+
+                Status($"Waiting for the {nodeType} node to load blocks...", updateTag: logTag);
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            } while (true);
+
+            return false;
+        }
+
         public async Task<bool> EnsureNodeIsSyncedAsync(NodeType nodeType, int apiPort)
         {
             string logTag = Guid.NewGuid().ToString();
@@ -272,33 +303,40 @@ namespace MasternodeSetupTool
 
             bool result;
 
-            do
+            try
             {
-                StatusModel blockModel = await $"http://localhost:{this.mainchainNetwork.DefaultAPIPort}/api".AppendPathSegment("node/status").GetJsonAsync<StatusModel>();
-                AddressIndexerTipModel addressIndexerModel = await $"http://localhost:{this.mainchainNetwork.DefaultAPIPort}/api".AppendPathSegment("blockstore/addressindexertip").GetJsonAsync<AddressIndexerTipModel>();
-
-                if (blockModel.ConsensusHeight != null)
+                do
                 {
-                    int targetHeight = (int)(blockModel.ConsensusHeight - 50);
+                    StatusModel blockModel = await $"http://localhost:{this.mainchainNetwork.DefaultAPIPort}/api".AppendPathSegment("node/status").GetJsonAsync<StatusModel>();
+                    AddressIndexerTipModel addressIndexerModel = await $"http://localhost:{this.mainchainNetwork.DefaultAPIPort}/api".AppendPathSegment("blockstore/addressindexertip").GetJsonAsync<AddressIndexerTipModel>();
 
-                    if (addressIndexerModel.TipHeight > targetHeight)
+                    if (blockModel.ConsensusHeight != null)
                     {
-                        Status($"Main chain address indexer synced.", updateTag: logTag);
-                        result = true;
-                        break;
-                    } 
-                    else
-                    {
-                        int height = addressIndexerModel.TipHeight ?? 0;
-                        int progress = Math.Clamp((int)(100.0 * height / targetHeight), 0, 100);
-                        Status($"Main chain node address indexer is syncing, progress: {progress}%, current height: {addressIndexerModel.TipHeight}...", updateTag: logTag);
-                        await Task.Delay(TimeSpan.FromSeconds(3));
+                        int targetHeight = (int)(blockModel.ConsensusHeight - 50);
+
+                        if (addressIndexerModel.TipHeight > targetHeight)
+                        {
+                            Status($"Main chain address indexer synced.", updateTag: logTag);
+                            result = true;
+                            break;
+                        }
+                        else
+                        {
+                            int height = addressIndexerModel.TipHeight ?? 0;
+                            int progress = Math.Clamp((int)(100.0 * height / targetHeight), 0, 100);
+                            Status($"Main chain node address indexer is syncing, progress: {progress}%, current height: {addressIndexerModel.TipHeight}...", updateTag: logTag);
+                            await Task.Delay(TimeSpan.FromSeconds(3));
+                        }
                     }
-                }
 
-                Status($"Main chain node address indexer is syncing, current height {addressIndexerModel.TipHeight}...", updateTag: logTag);
-                await Task.Delay(TimeSpan.FromSeconds(3));
-            } while (true);
+                    Status($"Main chain node address indexer is syncing, current height {addressIndexerModel.TipHeight}...", updateTag: logTag);
+                    await Task.Delay(TimeSpan.FromSeconds(3));
+                } while (true);
+            }
+            catch
+            {
+                return false;
+            }
 
             return result;
         }
