@@ -35,6 +35,8 @@ namespace MasternodeSetupTool
 
         public const int CollateralMinConfirmations = 500;
 
+        public const int FederationRegistrationBlocksCount = 240;
+
         private NetworkType networkType;
         private Network mainchainNetwork;
         private Network sidechainNetwork;
@@ -750,31 +752,73 @@ namespace MasternodeSetupTool
 
         public async Task<bool> MonitorJoinFederationRequestAsync()
         {
-            FederationMemberDetailedModel memberInfo = await $"http://localhost:{this.sidechainNetwork.DefaultAPIPort}/api"
-                .AppendPathSegment("federation/members/current")
-                .GetJsonAsync<FederationMemberDetailedModel>().ConfigureAwait(false);
+            string logTag = "MonitorJoinFederationRequestAsync";
 
-            if (memberInfo == null)
+            try
             {
-                Error("Unable to find federation member details");
+                StatusModel registrationBlockModel = await $"http://localhost:{this.sidechainNetwork.DefaultAPIPort}/api"
+                    .AppendPathSegment("node/status")
+                    .GetJsonAsync<StatusModel>().ConfigureAwait(false);
+
+                int? registrationHeight = registrationBlockModel.ConsensusHeight;
+
+                while (true)
+                {
+                    FederationMemberDetailedModel memberInfo = await $"http://localhost:{this.sidechainNetwork.DefaultAPIPort}/api"
+                        .AppendPathSegment("federation/members/current")
+                        .GetJsonAsync<FederationMemberDetailedModel>().ConfigureAwait(false);
+
+                    StatusModel currentBlockModel = await $"http://localhost:{this.sidechainNetwork.DefaultAPIPort}/api"
+                        .AppendPathSegment("node/status")
+                        .GetJsonAsync<StatusModel>().ConfigureAwait(false);
+
+                    int? currentHeight = currentBlockModel.ConsensusHeight;
+
+                    if (currentHeight == null)
+                    {
+                        if (registrationHeight == null)
+                        {
+                            Status($"Waiting for registration to complete...", updateTag: logTag);
+                        }
+                        else
+                        {
+                            Status($"Expecting registration to complete at block height {registrationHeight + FederationRegistrationBlocksCount}", updateTag: logTag);
+                        }
+                    }
+                    else
+                    {
+                        long? expectedRegistrationBlock = memberInfo?.MemberWillStartMiningAtBlockHeight;
+                        if (expectedRegistrationBlock == null && registrationHeight != null)
+                        {
+                            expectedRegistrationBlock = registrationHeight + FederationRegistrationBlocksCount;
+                        }
+
+                        if (expectedRegistrationBlock == null)
+                        {
+                            Status($"Waiting for registration to complete...", updateTag: logTag);
+                        }
+                        else
+                        {
+                            long blocksLeft = (long)expectedRegistrationBlock - (long)currentHeight;
+                            if (blocksLeft > 0)
+                            {
+                                Status($"Expecting registration to complete at block height {expectedRegistrationBlock} ({blocksLeft} blocks left)", updateTag: logTag);
+                            }
+                            else
+                            {
+                                return true;
+                            }
+                        }
+                    }
+
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                }
+            }
+            catch
+            {
+                Status($"Can't check masternode registration status", updateTag: logTag);
                 return false;
             }
-
-            StatusModel blockModel = await $"http://localhost:{this.sidechainNetwork.DefaultAPIPort}/api"
-                .AppendPathSegment("node/status")
-                .GetJsonAsync<StatusModel>().ConfigureAwait(false);
-
-            long? targetHeight = memberInfo.MemberWillStartMiningAtBlockHeight;
-            if (targetHeight != null)
-            {
-                Status($"Expecting registration to complete at block height {memberInfo.MemberWillStartMiningAtBlockHeight}");
-            }
-            else
-            {
-                Status($"Waiting for registration to complete...");
-            }
-
-            return (blockModel.ConsensusHeight >= memberInfo.MemberWillStartMiningAtBlockHeight);
         }
 
         public async Task<bool> StartMasterNodeDashboardAsync()
