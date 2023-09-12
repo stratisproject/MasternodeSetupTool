@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MasternodeSetupTool"
         mc:Ignorable="d"
-        Title="ShowAddressDialog" Height="200" Width="300">
+        Title="ShowAddressDialog" Height="200" Width="400">
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"/>
