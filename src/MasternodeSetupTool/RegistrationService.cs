@@ -673,6 +673,8 @@ namespace MasternodeSetupTool
 
                     Status($"Sent transaction: {builtTransaction.TransactionId}");
 
+                    Status("The cross-chain transaction has been sent. It will take 80 blocks on the STRAX blockchain (approximately 1 hour) to complete the transfer.");
+
                     return true;
                 }
             }

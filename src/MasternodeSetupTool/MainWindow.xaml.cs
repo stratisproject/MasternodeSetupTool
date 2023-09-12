@@ -467,6 +467,7 @@ namespace MasternodeSetupTool
                 else
                 {
                     Log("Waiting for registration fee to be sent via cross-chain transfer...", updateTag: this.currentState);
+                    await Task.Delay(TimeSpan.FromSeconds(30));
                     this.nextState = "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer";
                 }
             }
