@@ -115,7 +115,7 @@ namespace MasternodeSetupTool
             this.logger.Error(message, exception);
         }
 
-        public async Task<bool> StartNodeAsync(NodeType nodeType, int apiPort)
+        public async Task<bool> StartNodeAsync(NodeType nodeType, int apiPort, bool reindex = false)
         {
             if (await CheckNodeIsRunningAsync(apiPort))
             {
@@ -140,32 +140,56 @@ namespace MasternodeSetupTool
             if (this.networkType == NetworkType.Testnet)
             {               
                 argumentBuilder.Append("-testnet ");
-                // argumentBuilder.Append("-reindex ");
             }
 
             if (this.networkType == NetworkType.Regtest)
                 argumentBuilder.Append("-regtest ");
 
+            if (reindex)
+            {
+                argumentBuilder.Append("-reindex ");
+            }
+
             Status($"Starting the {nodeType} node on {this.networkType}. Start up arguments: {argumentBuilder}");
+
+            string fullPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CirrusMinerD"));
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = "Stratis.CirrusMinerD.exe",
+                FileName = Path.Combine(fullPath, "Stratis.CirrusMinerD.exe"),
                 Arguments = argumentBuilder.ToString(),
-                UseShellExecute = true,
+                UseShellExecute = false,
                 WindowStyle = ProcessWindowStyle.Minimized,
-                WorkingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CirrusMinerD"))
+                WorkingDirectory = fullPath,
+                RedirectStandardError = true,
             };
 
             var process = Process.Start(startInfo);
+
             await Task.Delay(TimeSpan.FromSeconds(5));
 
-            if (process != null && process.HasExited)
+            if (process == null || process.HasExited)
             {
-                Error($"{nodeType} node process failed to start, exiting...");
+                Error($"{nodeType} node process failed to start, exiting..."); 
 
                 return false;
             }
+
+            process.ErrorDataReceived += async (object sender, DataReceivedEventArgs e) =>
+            {
+                if (e.Data != null && e.Data.Contains("-reindex"))
+                {
+                    // Disable infinite recursion
+                    if (!reindex)
+                    {
+                        await StartNodeAsync(nodeType, apiPort, reindex=true);
+                    }
+
+                    Error("Node asks to reindex, restarting process...");
+                }
+            };
+
+            process.BeginErrorReadLine();
 
             Status($"{nodeType} node started.");
 
