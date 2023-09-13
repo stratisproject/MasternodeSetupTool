@@ -424,8 +424,6 @@ namespace MasternodeSetupTool
                     Status($"SUCCESS: The wallet '{walletName}' contains the required amount of {amountToCheck}.");
                     return true;
                 }
-
-                Error($"ERROR: The wallet '{walletName}' does not contain the required amount of {amountToCheck}.");
             }
             catch (Exception ex)
             {
