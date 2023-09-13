@@ -175,21 +175,21 @@ namespace MasternodeSetupTool
                 return false;
             }
 
-            process.ErrorDataReceived += async (object sender, DataReceivedEventArgs e) =>
-            {
-                if (e.Data != null && e.Data.Contains("-reindex"))
-                {
-                    // Disable infinite recursion
-                    if (!reindex)
-                    {
-                        await StartNodeAsync(nodeType, apiPort, reindex=true);
-                    }
+            //process.ErrorDataReceived += async (object sender, DataReceivedEventArgs e) =>
+            //{
+            //    if (e.Data != null && e.Data.Contains("-reindex"))
+            //    {
+            //        // Disable infinite recursion
+            //        if (!reindex)
+            //        {
+            //            await StartNodeAsync(nodeType, apiPort, reindex=true);
+            //        }
 
-                    Error("Node asks to reindex, restarting process...");
-                }
-            };
+            //        Error("Node asks to reindex, restarting process...");
+            //    }
+            //};
 
-            process.BeginErrorReadLine();
+            //process.BeginErrorReadLine();
 
             Status($"{nodeType} node started.");
 
