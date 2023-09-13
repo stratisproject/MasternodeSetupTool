@@ -476,7 +476,7 @@ namespace MasternodeSetupTool
 
             var walletRecoveryRequest = new WalletRecoveryRequest()
             {
-                CreationDate = DateTime.Now,
+                CreationDate = DateTime.Now.ToUniversalTime(),
                 Mnemonic = mnemonic,
                 Name = walletName,
                 Passphrase = passphrase,

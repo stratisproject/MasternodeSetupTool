@@ -3,6 +3,7 @@ using System.Windows;
 using Flurl.Http;
 using Flurl.Http.Configuration;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Stratis.Bitcoin.Utilities.JsonConverters;
 
 namespace MasternodeSetupTool
@@ -19,7 +20,8 @@ namespace MasternodeSetupTool
                 {
                     Converters = new List<JsonConverter>()
                     {
-                        new DateTimeToUnixTimeConverter()
+                        new DateTimeToUnixTimeConverter(),
+                        new IsoDateTimeConverter(),
                     }
                 };
 
