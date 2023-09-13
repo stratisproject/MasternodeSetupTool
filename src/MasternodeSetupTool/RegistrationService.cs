@@ -571,6 +571,28 @@ namespace MasternodeSetupTool
             }
         }
 
+        public async Task<List<AddressItem>?> GetWalletAddressesAsync(string walletName, int apiPort)
+        {
+            try
+            {
+                var walletBalanceRequest = new WalletBalanceRequest() { WalletName = walletName, IncludeBalanceByAddress = true };
+
+                WalletBalanceModel walletBalanceModel = await $"http://localhost:{apiPort}/api"
+                    .AppendPathSegment("wallet/balance")
+                    .SetQueryParams(walletBalanceRequest)
+                    .GetJsonAsync<WalletBalanceModel>().ConfigureAwait(false);
+
+                return walletBalanceModel.AccountsBalances.FirstOrDefault()
+                    ?.Addresses?.Select(item => new AddressItem(item.Address, item.AmountConfirmed))
+                    ?.ToList();
+            } 
+            catch
+            {
+                return null;
+            }
+
+        }
+
         public async Task<WalletItem> GetWalletBalanceAsync(string walletName, int apiPort)
         {
             var walletBalanceRequest = new WalletBalanceRequest() { WalletName = walletName };

@@ -35,4 +35,17 @@
     <Resource Include="Logo.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="AddressSelectionDialog.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="AddressSelectionDialog.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
 </Project>

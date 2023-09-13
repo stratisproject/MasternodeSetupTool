@@ -411,9 +411,14 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_AskForCollateral")
             {
-                this.collateralAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true);
-
-                new ShowAddressDialog(NodeType.MainChain, this.collateralAddress).ShowDialog();
+                this.collateralAddress = await HandleAddressSelectionAsync(NodeType.MainChain, collateralWalletName);
+                
+                if (this.collateralAddress == null)
+                {
+                    this.collateralAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true);
+                    
+                    new ShowAddressDialog(NodeType.MainChain, this.collateralAddress).ShowDialog();
+                }
 
                 // The 3 sub-branches recombine after this and can share common states.
                 this.nextState = "Setup_CreateRestoreUseExisting_CheckForCollateral";
@@ -599,6 +604,25 @@ namespace MasternodeSetupTool
             }
 
             return false;
+        }
+
+        private async Task<string?> HandleAddressSelectionAsync(NodeType nodeType, string walletName)
+        {
+            Network network = nodeType == NodeType.MainChain
+                ? this.registrationService.MainchainNetwork
+                : this.registrationService.SidechainNetwork;
+
+            List<AddressItem>? addressesWithBalance = await this.registrationService.GetWalletAddressesAsync(walletName, network.DefaultAPIPort);
+
+            if (addressesWithBalance != null)
+            {
+                var selectionDialog = new AddressSelectionDialog(addressesWithBalance);
+                selectionDialog.ShowDialog();
+
+                return selectionDialog.SelectedAddress;
+            }
+
+            return null;
         }
 
         private async Task<bool> HandleExistingWalletNameAsync(NodeType nodeType)
