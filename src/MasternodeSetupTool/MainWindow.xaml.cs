@@ -444,8 +444,7 @@ namespace MasternodeSetupTool
             {
                 if (MessageBox.Show("Insufficient balance in the mining wallet. Perform a cross-chain transfer of 500.1 STRAX?", "Registration Fee Missing", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.No)
                 {
-                    ResetState(); // TODO: Maybe we don't have to go all the way back to the beginning, but it is unclear what should be done if they select 'No'
-
+                    this.nextState = "Setup_CreateRestoreUseExisting_WaitForBalance";
                     return true;
                 }
 
@@ -469,6 +468,20 @@ namespace MasternodeSetupTool
                     Log("Waiting for registration fee to be sent via cross-chain transfer...", updateTag: this.currentState);
                     await Task.Delay(TimeSpan.FromSeconds(30));
                     this.nextState = "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer";
+                }
+            }
+
+            if (this.currentState == "Setup_CreateRestoreUseExisting_WaitForBalance")
+            {
+
+                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(true))
+                {
+                    this.nextState = "Setup_CreateRestoreUseExisting_PerformRegistration";
+                }
+                else
+                {
+                    Log("Waiting for registration fee to be sent to the mining wallet...", updateTag: this.currentState);
+                    this.nextState = "Setup_CreateRestoreUseExisting_WaitForBalance";
                 }
             }
 
