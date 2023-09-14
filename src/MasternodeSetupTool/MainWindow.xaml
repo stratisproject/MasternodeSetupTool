@@ -39,7 +39,6 @@
         <StackPanel 
             Grid.Column="0" 
             Grid.Row="1" 
-            Name="Main" 
             Orientation="Vertical" 
             HorizontalAlignment="Left"
             VerticalAlignment="Bottom" 

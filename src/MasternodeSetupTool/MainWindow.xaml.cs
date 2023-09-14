@@ -433,11 +433,11 @@ namespace MasternodeSetupTool
             {
                 this.CollateralAddress = await HandleAddressSelectionAsync(NodeType.MainChain, collateralWalletName);
                 
-                if (this.collateralAddress == null)
+                if (this.CollateralAddress == null)
                 {
                     this.CollateralAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true);
                     
-                    new ShowAddressDialog(NodeType.MainChain, this.collateralAddress).ShowDialog();
+                    new ShowAddressDialog(NodeType.MainChain, this.CollateralAddress).ShowDialog();
                 }
 
                 // The 3 sub-branches recombine after this and can share common states.
@@ -519,7 +519,7 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_PerformRegistration")
             {
-                bool registeredSuccessfully = await this.registrationService.CallJoinFederationRequestAsync(this.collateralAddress, this.collateralWalletName, this.collateralWalletPassword, this.miningWalletName, this.miningWalletPassword).ConfigureAwait(true);
+                bool registeredSuccessfully = await this.registrationService.CallJoinFederationRequestAsync(this.CollateralAddress, this.collateralWalletName, this.collateralWalletPassword, this.miningWalletName, this.miningWalletPassword).ConfigureAwait(true);
                 if (!registeredSuccessfully)
                 {
                     Error("Failed to register your masternode, aborting...");
