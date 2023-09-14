@@ -50,8 +50,28 @@ namespace MasternodeSetupTool
         private string? collateralWalletName;
         private string? miningWalletName;
 
-        private string? collateralAddress;
-        private string? cirrusAddress;
+        private string? _collateralAddress;
+        private string? _miningAddress;
+
+        private string? CollateralAddress
+        {
+            get => this._collateralAddress;
+            set
+            {
+                this._collateralAddress = value;
+                this.CollateralAddressText.Text = $"Collateral wallet address: {value}";
+            }
+        }
+
+        private string? MiningAddress
+        {
+            get => this._miningAddress;
+            set
+            {
+                this._miningAddress = value;
+                this.MiningAddressText.Text = $"Collateral wallet address: {value}";
+            }
+        }
 
         private bool PrintStacktraces
         {
@@ -411,11 +431,11 @@ namespace MasternodeSetupTool
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_Create_AskForCollateral")
             {
-                this.collateralAddress = await HandleAddressSelectionAsync(NodeType.MainChain, collateralWalletName);
+                this.CollateralAddress = await HandleAddressSelectionAsync(NodeType.MainChain, collateralWalletName);
                 
                 if (this.collateralAddress == null)
                 {
-                    this.collateralAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true);
+                    this.CollateralAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true);
                     
                     new ShowAddressDialog(NodeType.MainChain, this.collateralAddress).ShowDialog();
                 }
@@ -446,6 +466,7 @@ namespace MasternodeSetupTool
                 else
                 {
                     string? miningAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true);
+                    this.MiningAddress = miningAddress;
                     Error($"Insufficient balance to pay registration fee. Please send 500.1 CRS to the mining wallet on address: {miningAddress}");
                     this.nextState = "Setup_CreateRestoreUseExisting_WaitForBalance";
                 }
