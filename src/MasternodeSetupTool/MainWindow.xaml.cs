@@ -440,41 +440,47 @@ namespace MasternodeSetupTool
             if (this.currentState == "Setup_CreateRestoreUseExisting_CheckForRegistrationFee")
             {
                 if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(true))
-                    this.nextState = "Setup_CreateRestoreUseExisting_PerformRegistration";
-                else
-                    this.nextState = "Setup_CreateRestoreUseExisting_PerformCrossChain";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_PerformCrossChain")
-            {
-                if (MessageBox.Show("Insufficient balance in the mining wallet. Perform a cross-chain transfer of 500.1 STRAX?", "Registration Fee Missing", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.No)
                 {
+                    this.nextState = "Setup_CreateRestoreUseExisting_PerformRegistration";
+                }
+                else
+                {
+                    string? miningAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true);
+                    Error($"Insufficient balance to pay registration fee. Please send 500.1 CRS to the mining wallet on address: {miningAddress}");
                     this.nextState = "Setup_CreateRestoreUseExisting_WaitForBalance";
-                    return true;
-                }
-
-                this.cirrusAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true);
-
-                if (await this.registrationService.PerformCrossChainTransferAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, this.collateralWalletPassword, "500.1", this.cirrusAddress, this.collateralAddress).ConfigureAwait(true))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer";
                 }
             }
 
-            if (this.currentState == "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer")
-            {
+            // if (this.currentState == "Setup_CreateRestoreUseExisting_PerformCrossChain")
+            // {
+            //     if (MessageBox.Show("Insufficient balance in the mining wallet. Perform a cross-chain transfer of 500.1 STRAX?", "Registration Fee Missing", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.No)
+            //     {
+            //         this.nextState = "Setup_CreateRestoreUseExisting_WaitForBalance";
+            //         return true;
+            //     }
 
-                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(true))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_PerformRegistration";
-                } 
-                else
-                {
-                    Log("Waiting for registration fee to be sent via cross-chain transfer...", updateTag: this.currentState);
-                    await Task.Delay(TimeSpan.FromSeconds(30));
-                    this.nextState = "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer";
-                }
-            }
+            //     this.cirrusAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true);
+
+            //     if (await this.registrationService.PerformCrossChainTransferAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, this.collateralWalletPassword, "500.1", this.cirrusAddress, this.collateralAddress).ConfigureAwait(true))
+            //     {
+            //         this.nextState = "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer";
+            //     }
+            // }
+
+            // if (this.currentState == "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer")
+            // {
+
+            //     if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(true))
+            //     {
+            //         this.nextState = "Setup_CreateRestoreUseExisting_PerformRegistration";
+            //     } 
+            //     else
+            //     {
+            //         Log("Waiting for registration fee to be sent via cross-chain transfer...", updateTag: this.currentState);
+            //         await Task.Delay(TimeSpan.FromSeconds(30));
+            //         this.nextState = "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer";
+            //     }
+            // }
 
             if (this.currentState == "Setup_CreateRestoreUseExisting_WaitForBalance")
             {
