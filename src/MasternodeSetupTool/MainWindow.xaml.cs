@@ -69,7 +69,7 @@ namespace MasternodeSetupTool
             set
             {
                 this._miningAddress = value;
-                this.MiningAddressText.Text = $"Collateral wallet address: {value}";
+                this.MiningAddressText.Text = $"Mining wallet address: {value}";
             }
         }
 
