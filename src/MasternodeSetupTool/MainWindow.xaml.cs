@@ -38,12 +38,7 @@ namespace MasternodeSetupTool
 
         private bool createdButtons;
 
-        private string? collateralWalletMnemonic;
-        private string? miningWalletMnemonic;
-
-        private string? collateralWalletPassphrase;
-        private string? miningWalletPassphrase;
-
+        
         private string? collateralWalletPassword;
         private string? miningWalletPassword;
 

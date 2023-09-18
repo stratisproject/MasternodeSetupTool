@@ -774,16 +774,16 @@ namespace MasternodeSetupTool
             return sendActionResult.TransactionId.ToString();
         }
 
-        public async Task<bool> CallJoinFederationRequestAsync(string collateralAddress, string collateralWallet, string collateralPassword, string cirrusWalletName, string cirrusWalletPassword)
+        public async Task<bool> CallJoinFederationRequestAsync(WalletCredentials collateralCredentials, WalletCredentials miningCredentials)
         {
             var request = new JoinFederationRequestModel()
             {
-                CollateralAddress = collateralAddress,
-                CollateralWalletName = collateralWallet,
-                CollateralWalletPassword = collateralPassword,
+                CollateralAddress = collateralCredentials.ChoosenAddress,
+                CollateralWalletName = collateralCredentials.Name,
+                CollateralWalletPassword = collateralCredentials.Password,
                 WalletAccount = "account 0",
-                WalletName = cirrusWalletName,
-                WalletPassword = cirrusWalletPassword
+                WalletName = miningCredentials.Name,
+                WalletPassword = miningCredentials.Password
             };
 
             try
