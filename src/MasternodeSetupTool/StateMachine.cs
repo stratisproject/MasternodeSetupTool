@@ -43,44 +43,24 @@ public partial class StateMachine: ILogger
         });
     }
 
+    public void OnRunNode()
+    {
+        this.nextState = "RunMasterNode_KeyPresent";
+    }
+
+    public void OnSetupNode()
+    {
+        this.nextState = "SetupMasterNode_Eula";
+    }
+
     private async void StateMachine_TickAsync(object? sender, EventArgs e)
     {
         this.timer.IsEnabled = false;
 
-        // if (this.currentState == "Begin")
-        // {
-        //     if (!this.createdButtons)
-        //     {
-        //         this.createdButtons = true;
-
-        //         Style flatStyle = this.FlatStyle;
-
-        //         var button = new Button
-        //         {
-        //             Content = "Run Masternode",
-        //             Tag = "RunMasterNode",
-        //             Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
-        //             Padding = new Thickness(4.0),
-        //             Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
-        //         };
-
-        //         button.Click += new RoutedEventHandler(Button_Click);
-        //         this.stackPanel.Children.Add(button);
-
-        //         button = new Button
-        //         {
-        //             Content = "Register Masternode",
-        //             Tag = "SetupMasterNode",
-        //             Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
-        //             Padding = new Thickness(4.0),
-        //             Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
-        //         };
-
-        //         button.Click += new RoutedEventHandler(Button_Click);
-
-        //         this.stackPanel.Children.Add(button);
-        //     }
-        // }
+        if (this.currentState == "Begin")
+        {
+            await this.stateHandler.OnStart();
+        }
 
         if (this.nextState == null)
         {
@@ -575,7 +555,7 @@ public partial class StateMachine: ILogger
                     }
                     else
                     {
-                        await this.stateHandler.OnWalletNameExists();
+                        await this.stateHandler.OnWalletNameExists(nodeType);
                     }
                 }
                 catch
@@ -631,7 +611,7 @@ public partial class StateMachine: ILogger
                 }
             }
 
-            await this.stateHandler.OnMnemonicIsInvalid();
+            await this.stateHandler.OnMnemonicIsInvalid(nodeType);
         } while (true);
 
         creationState.Mnemonic = mnemonic;
@@ -711,7 +691,7 @@ public partial class StateMachine: ILogger
             }
             catch (WalletCollisionException)
             {
-                await this.stateHandler.OnMnemonicExists();
+                await this.stateHandler.OnMnemonicExists(nodeType);
 
                 if (!await HandleNewMnemonicAsync(nodeType, walletCreationState, canChangeMnemonic: true))
                 {
@@ -864,21 +844,21 @@ public partial class StateMachine: ILogger
 
     public void Info(string message, string? updateTag = null)
     {
-        throw new NotImplementedException();
+        this.stateHandler.Info(message, updateTag);
     }
 
     public void Error(string message)
     {
-        throw new NotImplementedException();
+        this.stateHandler.Error(message);
     }
 
     public void Error(Exception exception)
     {
-        throw new NotImplementedException();
+        this.stateHandler.Error(exception);
     }
 
     public void Error(string message, Exception exception)
     {
-        throw new NotImplementedException();
+        this.stateHandler.Error(message, exception);
     }
 }

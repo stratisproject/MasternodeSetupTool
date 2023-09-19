@@ -4,7 +4,7 @@ using MasternodeSetupTool;
 
 namespace MasternodeSetupTool;
 
-public interface IStateHandler
+public interface IStateHandler: ILogger
 {
     public Task OnStart();
 
@@ -36,8 +36,6 @@ public interface IStateHandler
 
     public Task OnMissingRegistrationFee(string address);
 
-    public Task OnWaitForRegistration();
-
     public Task OnRegistrationCanceled();
 
     public Task OnRegistrationComplete();
@@ -57,11 +55,11 @@ public interface IStateHandler
 
     public Task<bool> OnAskReenterPassword(NodeType nodeType);
 
-    public Task OnWalletNameExists();
+    public Task OnWalletNameExists(NodeType nodeType);
 
-    public Task OnMnemonicIsInvalid();
+    public Task OnMnemonicIsInvalid(NodeType nodeType);
 
-    public Task OnMnemonicExists();
+    public Task OnMnemonicExists(NodeType nodeType);
     
     public Task OnWalletExistsOrInvalid(NodeType nodeType);
 
