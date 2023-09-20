@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Threading;
 using NBitcoin;
 using Color = System.Windows.Media.Color;
 
@@ -24,9 +25,11 @@ namespace MasternodeSetupTool
         private readonly StackPanel stackPanel;
         private readonly TextBlock statusBar;
 
-        private bool createdButtons;
+        private bool createdButtons = false;
 
         private StateMachine stateMachine;
+
+        private readonly DispatcherTimer timer;
 
         private bool PrintStacktraces
         {
@@ -65,6 +68,19 @@ namespace MasternodeSetupTool
                 networkType = NetworkType.Regtest;
 
             this.stateMachine = new StateMachine(networkType, this);
+
+            this.timer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+
+            this.timer.Tick += StateMachine_TickAsync;
+            this.timer.Start();
+        }
+
+        private async void StateMachine_TickAsync(object? sender, EventArgs e)
+        {
+            await this.stateMachine.TickAsync();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -172,7 +188,7 @@ namespace MasternodeSetupTool
                 ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
                 ?.InformationalVersion;
 
-        public Task OnStart()
+        public async Task OnStart()
         {
             if (!this.createdButtons)
             {
@@ -180,400 +196,306 @@ namespace MasternodeSetupTool
 
                 Style flatStyle = this.FlatStyle;
 
-                var button = new Button
+                try
                 {
-                    Content = "Run Masternode",
-                    Tag = "RunMasterNode",
-                    Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
-                    Padding = new Thickness(4.0),
-                    Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
-                };
+                    var button = new Button
+                    {
+                        Content = "Run Masternode",
+                        Tag = "RunMasterNode",
+                        Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
+                        Padding = new Thickness(4.0),
+                        Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
+                    };
+                    button.Click += new RoutedEventHandler(Button_Click);
+                    this.stackPanel.Children.Add(button);
 
-                button.Click += new RoutedEventHandler(Button_Click);
-                this.stackPanel.Children.Add(button);
+                    button = new Button
+                    {
+                        Content = "Register Masternode",
+                        Tag = "SetupMasterNode",
+                        Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
+                        Padding = new Thickness(4.0),
+                        Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
+                    };
 
-                button = new Button
+                    button.Click += new RoutedEventHandler(Button_Click);
+
+                    this.stackPanel.Children.Add(button);
+                }
+                catch (Exception ex)
                 {
-                    Content = "Register Masternode",
-                    Tag = "SetupMasterNode",
-                    Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
-                    Padding = new Thickness(4.0),
-                    Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
-                };
 
-                button.Click += new RoutedEventHandler(Button_Click);
-
-                this.stackPanel.Children.Add(button);
+                }
             }
-
-            return Task.CompletedTask;
         }
 
-        public Task OnProgramVersionAvailable(string? version)
+        public async Task OnProgramVersionAvailable(string? version)
         {
             if (version != null)
             {
+                var thread1 = System.Threading.Thread.CurrentThread;
                 this.VersionText.Text = $"Version: {version}";
             }
-
-            return Task.CompletedTask;
         }
 
-        public Task OnFederationKeyMissing()
+        public async Task OnFederationKeyMissing()
         {
             MessageBox.Show("Federation key does not exist", "Key file missing", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.Yes);
-            return Task.CompletedTask;
         }
 
-        public Task OnNodeFailedToStart(NodeType nodeType, string? reason = null)
+        public async Task OnNodeFailedToStart(NodeType nodeType, string? reason = null)
         {
             Error($"Cannot start the {nodeType} node, aborting...");
             if (reason != null)
             {
                 Error($"Reason: {reason}");
             }
-            return Task.CompletedTask;
         }
 
-        public Task<bool> OnAskForEULA()
+        public async Task<bool> OnAskForEULA()
         {
-            return Task.Run(
-                () => MessageBox.Show("100K collateral is required to operate a Masternode; in addition, a balance of 500.1 CRS is required to fund the registration transaction. Are you happy to proceed?",
+            return MessageBox.Show("100K collateral is required to operate a Masternode; in addition, a balance of 500.1 CRS is required to fund the registration transaction. Are you happy to proceed?",
                             "End-User License Agreement",
                             MessageBoxButton.YesNo,
                             MessageBoxImage.Warning,
-                            MessageBoxResult.No) == MessageBoxResult.Yes);
+                            MessageBoxResult.No) == MessageBoxResult.Yes;
         }
-
-        public Task<bool> OnAskForNewFederationKey()
+        
+        public async Task<bool> OnAskForNewFederationKey()
         {
-            return Task.Run(() =>
-            {
-                return MessageBox.Show(
+            return MessageBox.Show(
                     "Federation key exists. Shall we create a new one?",
                     "Key file already present",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning,
                     MessageBoxResult.No) == MessageBoxResult.Yes;
-            });
         }
 
-        public Task OnShowNewFederationKey(string pubKey, string savePath)
+        public async Task OnShowNewFederationKey(string pubKey, string savePath)
         {
-            return Task.Run(() =>
-            {
-                MessageBox.Show($"Your Masternode public key is: {pubKey}");
-                MessageBox.Show($"Your private key has been saved in the root Cirrus data folder:\r\n{savePath}. Please ensure that you keep a backup of this file.");
-            });
+            MessageBox.Show($"Your Masternode public key is: {pubKey}");
+            MessageBox.Show($"Your private key has been saved in the root Cirrus data folder:\r\n{savePath}. Please ensure that you keep a backup of this file.");
         }
 
-        public Task<bool> OnAskToRunIfAlreadyMember()
+        public async Task<bool> OnAskToRunIfAlreadyMember()
         {
-            return Task.Run(() =>
-            {
-                return MessageBox.Show("Your node is already a member of a federation. Do you want to run the Masternode Dashboard instead?",
-                                       "Member of a federation",
-                                       MessageBoxButton.YesNo,
-                                       MessageBoxImage.Warning,
-                                       MessageBoxResult.No) == MessageBoxResult.Yes;
-            });
-
+            return MessageBox.Show("Your node is already a member of a federation. Do you want to run the Masternode Dashboard instead?",
+                                                   "Member of a federation",
+                                                   MessageBoxButton.YesNo,
+                                                   MessageBoxImage.Warning,
+                                                   MessageBoxResult.No) == MessageBoxResult.Yes;
         }
 
-        public Task OnAlreadyMember()
+        public async Task OnAlreadyMember()
         {
-            return Task.Run(() =>
-            {
-                Info("Your node is already a member of a federation. Consider using 'Run Masternode' instead.");
-            });
+            Info("Your node is already a member of a federation. Consider using 'Run Masternode' instead.");
         }
 
-        public Task<WalletSource?> OnAskForWalletSource(NodeType nodeType)
+        public async Task<WalletSource?> OnAskForWalletSource(NodeType nodeType)
         {
-            return Task.Run<WalletSource?>(() =>
+            var dialog = new CreateRestoreUseExisting();
+            dialog.ShowDialog();
+
+            if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.CreateWallet)
             {
-                var dialog = new CreateRestoreUseExisting();
-                dialog.ShowDialog();
+                return WalletSource.NewWallet;
+            }
 
-                if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.CreateWallet)
-                {
-                    return WalletSource.NewWallet;
-                }
+            if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.RestoreWallet)
+            {
+                return WalletSource.RestoreWallet;
+            }
 
-                if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.RestoreWallet)
-                {
-                    return WalletSource.RestoreWallet;
-                }
+            if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.UseExistingWallet)
+            {
+                return WalletSource.UseExistingWallet;
+            }
 
-                if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.UseExistingWallet)
-                {
-                    return WalletSource.UseExistingWallet;
-                }
+            return null;
+        }
 
+        public async Task<string?> OnChooseWallet(List<WalletItem> wallets, NodeType nodeType)
+        {
+            var selectionDialog = new WalletSelectionDialog(wallets);
+            selectionDialog.ShowDialog();
+
+            return selectionDialog.SelectedWalletName;
+        }
+
+        public async Task<string?> OnChooseAddress(List<AddressItem> addresses, NodeType nodeType)
+        {
+            var selectionDialog = new AddressSelectionDialog(addresses);
+            selectionDialog.ShowDialog();
+
+            return selectionDialog.SelectedAddress;
+        }
+
+        public async Task OnWaitingForCollateral()
+        {
+            Log($"Waiting for collateral wallet to have a balance of at least {RegistrationService.CollateralRequirement} STRAX", updateTag: "OnWaitingForCollateral");
+        }
+
+        public async Task OnWaitingForRegistrationFee()
+        {
+            Log("Waiting for registration fee to be sent to the mining wallet...", updateTag: "OnWaitingForRegistrationFee");
+        }
+
+        public async Task OnMissingRegistrationFee(string address)
+        {
+            Error($"Insufficient balance to pay registration fee. Please send 500.1 CRS to the mining wallet on address: {address}");
+        }
+
+        public async Task OnRegistrationCanceled()
+        {
+            LogError("Registration cancelled.");
+        }
+
+        public async Task OnRegistrationComplete()
+        {
+            Log("Registration complete");
+        }
+
+        public async Task OnRegistrationFailed()
+        {
+            Error("Failed to register your masternode, aborting...");
+        }
+
+        public async Task<bool> OnAskForMnemonicConfirmation(NodeType nodeType, string mnemonic)
+        {
+            var dialog = new ConfirmationDialog($"Enter mnemonic for the {WalletTypeName(nodeType)} wallet", "Mnemonic", mnemonic, false);
+            dialog.ShowDialog();
+            return dialog.DialogResult == true;
+        }
+
+        public async Task<string?> OnAskForUserMnemonic(NodeType nodeType)
+        {
+            var inputBox = new InputBox($"Please enter your mnemonic for the {WalletTypeName(nodeType)} ({nodeType}) wallet", "Mnemonic");
+            return inputBox.ShowDialog();
+        }
+
+        public async Task<string?> OnAskForWalletName(NodeType nodeType, bool newWallet)
+        {
+            var inputBox = new InputBox($"Please enter {nodeType} wallet name:");
+            return inputBox.ShowDialog();
+        }
+
+        public async Task<string?> OnAskForPassphrase(NodeType nodeType)
+        {
+            var dialog = new ConfirmationDialog($"Enter passphrase for the {nodeType} wallet",
+                "Passphrase",
+                "",
+                true,
+                allowEmpty: true);
+
+            dialog.ShowDialog();
+
+            if (dialog.DialogResult != true)
+            {
                 return null;
-            });
+            }
+
+            return dialog.Text2.Text ?? "";
         }
 
-        public Task<string?> OnChooseWallet(List<WalletItem> wallets, NodeType nodeType)
+        public async Task<string?> OnAskForWalletPassword(NodeType nodeType)
         {
-            return Task.Run(() =>
-            {
-                var selectionDialog = new WalletSelectionDialog(wallets);
-                selectionDialog.ShowDialog();
+            var dialog = new ConfirmationDialog(
+                titleText: $"Enter {WalletTypeName(nodeType)} wallet password ({nodeType})",
+                labelText: "Password",
+                firstTextContent: "",
+                firstTextEditable: true);
 
-                return selectionDialog.SelectedWalletName;
-            });
+            dialog.ShowDialog();
+
+            if (dialog.DialogResult != true)
+            {
+                return null;
+            }
+
+            return dialog.Text2.Text ?? string.Empty;
         }
 
-        public Task<string?> OnChooseAddress(List<AddressItem> addresses, NodeType nodeType)
+        public async Task<string?> OnAskCreatePassword(NodeType nodeType)
         {
-            return Task.Run(() =>
-            {
-                var selectionDialog = new AddressSelectionDialog(addresses);
-                selectionDialog.ShowDialog();
+            var dialog = new ConfirmationDialog(
+                titleText: $"Enter a new {WalletTypeName(nodeType)} wallet password ({nodeType})",
+                labelText: "Password",
+                firstTextContent: "",
+                firstTextEditable: true);
 
-                return selectionDialog.SelectedAddress;
-            });
+            dialog.ShowDialog();
+
+            if (dialog.DialogResult != true)
+            {
+                return null;
+            }
+
+            return dialog.Text2.Text ?? string.Empty;
         }
 
-        public Task OnWaitingForCollateral()
+        public async Task<bool> OnAskReenterPassword(NodeType nodeType)
         {
-            return Task.Run(() =>
-            {
-                Log($"Waiting for collateral wallet to have a balance of at least {RegistrationService.CollateralRequirement} STRAX", updateTag: "OnWaitingForCollateral");
-            });
+            return MessageBox.Show("The password you entered is incorrect. Do you want to enter it again?",
+                                   "Incorrect password",
+                                   MessageBoxButton.YesNo,
+                                   MessageBoxImage.Warning,
+                                   MessageBoxResult.No) == MessageBoxResult.No;
         }
 
-        public Task OnWaitingForRegistrationFee()
+        public async Task OnWalletNameExists(NodeType nodeType)
         {
-            return Task.Run(() =>
-            {
-                Log("Waiting for registration fee to be sent to the mining wallet...", updateTag: "OnWaitingForRegistrationFee");
-            });
+            MessageBox.Show("A wallet with this name already exists", "Error");
         }
 
-        public Task OnMissingRegistrationFee(string address)
+        public async Task OnMnemonicIsInvalid(NodeType nodeType)
         {
-            return Task.Run(() =>
-            {
-                Error($"Insufficient balance to pay registration fee. Please send 500.1 CRS to the mining wallet on address: {address}");
-            });
+            MessageBox.Show("Please ensure that you enter a valid mnemonic", "Error", MessageBoxButton.OK);
         }
 
-        public Task OnRegistrationCanceled()
+        public async Task OnMnemonicExists(NodeType nodeType)
         {
-            return Task.Run(() =>
-            {
-                LogError("Registration cancelled.");
-            });
+            LogError($"The {WalletTypeName(nodeType)} wallet with this mnemonic already exists.");
+            LogError("Please provide a new mnemonic.");
         }
 
-        public Task OnRegistrationComplete()
+        public async Task OnWalletExistsOrInvalid(NodeType nodeType)
         {
-            return Task.Run(() =>
-            {
-                Log("Registration complete");
-            });
+            MessageBox.Show("A wallet with this name already exists", "Error");
         }
 
-        public Task OnRegistrationFailed()
+        public async Task OnWalletSyncing(NodeType nodeType, int progress)
         {
-            return Task.Run(() =>
-            {
-                Error("Failed to register your masternode, aborting...");
-            });
+            Log($"{nodeType} ({WalletTypeName(nodeType)}) wallet is {progress}% synced", updateTag: $"{nodeType}WalletSyncing");
         }
 
-        public Task<bool> OnAskForMnemonicConfirmation(NodeType nodeType, string mnemonic)
+        public async Task OnWalletSynced(NodeType nodeType)
         {
-            return Task.Run(() =>
-            {
-                var dialog = new ConfirmationDialog($"Enter mnemonic for the {WalletTypeName(nodeType)} wallet", "Mnemonic", mnemonic, false);
-                dialog.ShowDialog();
-                return dialog.DialogResult == true;
-            });
+            Log($"{nodeType} ({WalletTypeName(nodeType)}) wallet synced successfuly.", updateTag: $"{nodeType}WalletSyncing");
         }
 
-        public Task<string?> OnAskForUserMnemonic(NodeType nodeType)
+        public async Task OnShowWalletName(NodeType nodeType, string walletName)
         {
-            return Task.Run(() =>
-            {
-                var inputBox = new InputBox($"Please enter your mnemonic for the {WalletTypeName(nodeType)} ({nodeType}) wallet", "Mnemonic");
-                return inputBox.ShowDialog();
-            });
+            //TODO
         }
 
-        public Task<string?> OnAskForWalletName(NodeType nodeType, bool newWallet)
+        public async Task OnShowWalletAddress(NodeType nodeType, string address)
         {
-            return Task.Run(() =>
-            {
-                var inputBox = new InputBox($"Please enter {nodeType} wallet name:");
-                return inputBox.ShowDialog();
-            });
+            //TODO
         }
 
-        public Task<string?> OnAskForPassphrase(NodeType nodeType)
+        public async Task OnRestoreWalletFailed(NodeType nodeType)
         {
-            return Task.Run(() =>
-            {
-                var dialog = new ConfirmationDialog($"Enter passphrase for the {nodeType} wallet",
-                    "Passphrase",
-                    "",
-                    true,
-                    allowEmpty: true);
-
-                dialog.ShowDialog();
-
-                if (dialog.DialogResult != true)
-                {
-                    return null;
-                }
-
-                return dialog.Text2.Text ?? "";
-            });
+            LogError($"Can not restore a {WalletTypeName(nodeType)} wallet, aborting...");
         }
 
-        public Task<string?> OnAskForWalletPassword(NodeType nodeType)
+        public async Task OnCreateWalletFailed(NodeType nodeType)
         {
-            return Task.Run(() =>
-            {
-                var dialog = new ConfirmationDialog(
-                    $"Enter {WalletTypeName(nodeType)} wallet password ({nodeType})",
-                    "Password",
-                    "",
-                    true);
-
-                dialog.ShowDialog();
-
-                if (dialog.DialogResult != true)
-                {
-                    return null;
-                }
-
-                return dialog.Text2.Text ?? string.Empty;
-            });
+            LogError($"Can not create a {WalletTypeName(nodeType)} wallet, aborting...");
         }
 
-        public Task<string?> OnAskCreatePassword(NodeType nodeType)
+        public async Task OnResyncFailed(NodeType nodeType)
         {
-            return Task.Run(() =>
-            {
-                var dialog = new ConfirmationDialog(
-                    $"Enter a new {WalletTypeName(nodeType)} wallet password ({nodeType})",
-                    "Password",
-                    "",
-                    true);
-
-                dialog.ShowDialog();
-
-                if (dialog.DialogResult != true)
-                {
-                    return null;
-                }
-
-                return dialog.Text2.Text ?? string.Empty;
-            });
-        }
-
-        public Task<bool> OnAskReenterPassword(NodeType nodeType)
-        {
-            return Task.Run(() =>
-            {
-                return MessageBox.Show("The password you entered is incorrect. Do you want to enter it again?",
-                                       "Incorrect password",
-                                       MessageBoxButton.YesNo,
-                                       MessageBoxImage.Warning,
-                                       MessageBoxResult.No) == MessageBoxResult.No;
-            });
-        }
-
-        public Task OnWalletNameExists(NodeType nodeType)
-        {
-            return Task.Run(() =>
-            {
-                MessageBox.Show("A wallet with this name already exists", "Error");
-            });
-        }
-
-        public Task OnMnemonicIsInvalid(NodeType nodeType)
-        {
-            return Task.Run(() =>
-            {
-                MessageBox.Show("Please ensure that you enter a valid mnemonic", "Error", MessageBoxButton.OK);
-            });
-        }
-
-        public Task OnMnemonicExists(NodeType nodeType)
-        {
-            return Task.Run(() =>
-            {
-                LogError($"The {WalletTypeName(nodeType)} wallet with this mnemonic already exists.");
-                LogError("Please provide a new mnemonic.");
-            });
-        }
-
-        public Task OnWalletExistsOrInvalid(NodeType nodeType)
-        {
-            return Task.Run(() =>
-            {
-                MessageBox.Show("A wallet with this name already exists", "Error");
-            });
-        }
-
-        public Task OnWalletSyncing(NodeType nodeType, int progress)
-        {
-            return Task.Run(() =>
-            {
-                Log($"{nodeType} ({WalletTypeName(nodeType)}) wallet is {progress}% synced", updateTag: $"{nodeType}WalletSyncing");
-            });
-        }
-
-        public Task OnWalletSynced(NodeType nodeType)
-        {
-            return Task.Run(() =>
-            {
-                Log($"{nodeType} ({WalletTypeName(nodeType)}) wallet synced successfuly.", updateTag: $"{nodeType}WalletSyncing");
-            });
-        }
-
-        public Task OnShowWalletName(NodeType nodeType, string walletName)
-        {
-            return Task.Run(() =>
-            {
-                //TODO
-            });
-        }
-
-        public Task OnShowWalletAddress(NodeType nodeType, string address)
-        {
-            return Task.Run(() =>
-            {
-                //TODO
-            });
-        }
-
-        public Task OnRestoreWalletFailed(NodeType nodeType)
-        {
-            return Task.Run(() =>
-            {
-                LogError($"Can not restore a {WalletTypeName(nodeType)} wallet, aborting...");
-            });
-        }
-
-        public Task OnCreateWalletFailed(NodeType nodeType)
-        {
-            return Task.Run(() =>
-            {
-                LogError($"Can not create a {WalletTypeName(nodeType)} wallet, aborting...");
-            });
-        }
-
-        public Task OnResyncFailed(NodeType nodeType)
-        {
-            return Task.Run(() => 
-            {
-                LogError($"Cannot resync {WalletTypeName(nodeType)} wallet, aborting...");
-            });
+            LogError($"Cannot resync {WalletTypeName(nodeType)} wallet, aborting...");
         }
     }
 }

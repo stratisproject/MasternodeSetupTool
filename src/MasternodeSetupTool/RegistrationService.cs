@@ -27,7 +27,7 @@ using Stratis.Sidechains.Networks;
 
 namespace MasternodeSetupTool
 {
-    public sealed class RegistrationService
+    public sealed class RegistrationService : IRegistrationService
     {
         public const int CollateralRequirement = 100_000;
         public const int FeeRequirement = 500;
@@ -138,7 +138,7 @@ namespace MasternodeSetupTool
             }
 
             if (this.networkType == NetworkType.Testnet)
-            {               
+            {
                 argumentBuilder.Append("-testnet ");
             }
 
@@ -170,7 +170,7 @@ namespace MasternodeSetupTool
 
             if (process == null || process.HasExited)
             {
-                Error($"{nodeType} node process failed to start, exiting..."); 
+                Error($"{nodeType} node process failed to start, exiting...");
 
                 return false;
             }
@@ -205,7 +205,7 @@ namespace MasternodeSetupTool
                     .WithHeader("Content-Type", "application/json-patch+json")
                     .PostAsync();
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
                 Error($"Can not shutdown {nodeType}.");
                 Error(e);
@@ -585,7 +585,7 @@ namespace MasternodeSetupTool
                 return walletBalanceModel.AccountsBalances.FirstOrDefault()
                     ?.Addresses?.Select(item => new AddressItem(item.Address, item.AmountConfirmed))
                     ?.ToList();
-            } 
+            }
             catch
             {
                 return null;
@@ -605,7 +605,7 @@ namespace MasternodeSetupTool
             return new WalletItem(name: walletName, balance: walletBalanceModel.AccountsBalances[0].SpendableAmount);
         }
 
-        public class WalletCollisionException: Exception { }
+        public class WalletCollisionException : Exception { }
 
         public async Task<bool> ResyncWalletAsync(int apiPort, string walletName)
         {
@@ -794,7 +794,7 @@ namespace MasternodeSetupTool
                     .ReceiveJson<JoinFederationResponseModel>()
                     .ConfigureAwait(false);
 
-                if (response != null && !string.IsNullOrEmpty(response.MinerPublicKey)) 
+                if (response != null && !string.IsNullOrEmpty(response.MinerPublicKey))
                 {
                     Status($"SUCCESS: The masternode request has now been submitted to the network");
                     return true;
@@ -935,7 +935,7 @@ namespace MasternodeSetupTool
             }
 
             Status($"Starting the masternode dashboard on {this.networkType}. Start up arguments: {argumentBuilder}");
-            
+
             string osSpecificCommand = "CMD.EXE";
             string osSpecificArguments = $"/K \"{argumentBuilder}\"";
 
