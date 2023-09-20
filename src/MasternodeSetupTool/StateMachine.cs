@@ -23,29 +23,29 @@ public class StateMachine: ILogger
         Run_LaunchBrowser,
         SetupMasterNode_Eula,
         Setup_KeyPresent,
-        Setup_CreateRestoreUseExisting_StartMainChain,
+        Setup_StartMainChain,
         Setup_CreateKey,
-        Setup_CreateRestoreUseExisting_MainChainSynced,
-        Setup_CreateRestoreUseExisting_StartSideChain,
-        Setup_CreateRestoreUseExisting_SideChainSynced,
-        Setup_CreateRestoreUseExisting_Create_AskForCollateral,
-        Setup_CreateRestoreUseExisting_CheckIsFederationMember,
-        Setup_CreateRestoreUseExisting_Select,
-        Setup_CreateRestoreUseExisting_Create,
-        Setup_CreateRestoreUseExisting_Create_Mining,
-        Setup_CreateRestoreUseExisting_CheckForCollateral,
-        Setup_CreateRestoreUseExisting_Restore,
-        Setup_CreateRestoreUseExisting_Restore_Mining,
-        Setup_CreateRestoreUseExisting_CheckForRegistrationFee,
-        Setup_CreateRestoreUseExisting_PerformRegistration,
-        Setup_CreateRestoreUseExisting_WaitForBalance,
-        Setup_CreateRestoreUseExisting_WaitForRegistration,
-        Setup_CreateRestoreUseExisting_UseExisting,
-        Setup_CreateRestoreUseExisting_UseExisting_CollateralPassword,
-        Setup_CreateRestoreUseExisting_UseExisting_Mining,
-        Setup_CreateRestoreUseExisting_UseExisting_MiningPassword,
-        Setup_CreateRestoreUseExisting_UseExisting_CheckMainWalletSynced,
-        Setup_CreateRestoreUseExisting_UseExisting_CheckSideWalletSynced
+        Setup_MainChainSynced,
+        Setup_StartSideChain,
+        Setup_SideChainSynced,
+        Setup_Create_AskForCollateral,
+        Setup_CheckIsFederationMember,
+        Setup_Select,
+        Setup_Create,
+        Setup_Create_Mining,
+        Setup_CheckForCollateral,
+        Setup_Restore,
+        Setup_Restore_Mining,
+        Setup_CheckForRegistrationFee,
+        Setup_PerformRegistration,
+        Setup_WaitForBalance,
+        Setup_WaitForRegistration,
+        Setup_UseExisting,
+        Setup_UseExisting_CollateralPassword,
+        Setup_UseExisting_Mining,
+        Setup_UseExisting_MiningPassword,
+        Setup_UseExisting_CheckMainWalletSynced,
+        Setup_UseExisting_CheckSideWalletSynced
     }
 
     private readonly RegistrationService registrationService;
@@ -219,7 +219,7 @@ public class StateMachine: ILogger
             {
                 if (!await this.stateHandler.OnAskForNewFederationKey())
                 {
-                    this.nextState = State.Setup_CreateRestoreUseExisting_StartMainChain;
+                    this.nextState = State.Setup_StartMainChain;
                     return true;
                 }
 
@@ -235,10 +235,10 @@ public class StateMachine: ILogger
 
             await this.stateHandler.OnShowNewFederationKey(this.registrationService.PubKey, savePath);
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_StartMainChain;
+            this.nextState = State.Setup_StartMainChain;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_StartMainChain)
+        if (this.currentState == State.Setup_StartMainChain)
         {
             // All 3 sub-branches of this state require the mainchain and sidechain nodes to be initialized, so do that first.
             if (!await this.registrationService.StartNodeAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true))
@@ -249,10 +249,10 @@ public class StateMachine: ILogger
                 return true;
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_MainChainSynced;
+            this.nextState = State.Setup_MainChainSynced;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_MainChainSynced)
+        if (this.currentState == State.Setup_MainChainSynced)
         {
             await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
@@ -260,10 +260,10 @@ public class StateMachine: ILogger
 
             await this.registrationService.EnsureBlockstoreIsSyncedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_StartSideChain;
+            this.nextState = State.Setup_StartSideChain;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_StartSideChain)
+        if (this.currentState == State.Setup_StartSideChain)
         {
             if (!await this.registrationService.StartNodeAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true))
             {
@@ -273,10 +273,10 @@ public class StateMachine: ILogger
                 return true;
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_SideChainSynced;
+            this.nextState = State.Setup_SideChainSynced;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_SideChainSynced)
+        if (this.currentState == State.Setup_SideChainSynced)
         {
             await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
@@ -284,10 +284,10 @@ public class StateMachine: ILogger
 
             await this.registrationService.EnsureBlockstoreIsSyncedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_CheckIsFederationMember;
+            this.nextState = State.Setup_CheckIsFederationMember;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_CheckIsFederationMember)
+        if (this.currentState == State.Setup_CheckIsFederationMember)
         {
             if (await this.registrationService.CheckIsFederationMemberAsync().ConfigureAwait(true))
             {
@@ -304,22 +304,22 @@ public class StateMachine: ILogger
                 }
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_Select;
+            this.nextState = State.Setup_Select;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_Select)
+        if (this.currentState == State.Setup_Select)
         {
             //TODO: Probably we need to show picker for collateral and mining wallets independently
             switch (await this.stateHandler.OnAskForWalletSource(NodeType.MainChain))
             {
                 case WalletSource.NewWallet:
-                    this.nextState = State.Setup_CreateRestoreUseExisting_Create;
+                    this.nextState = State.Setup_Create;
                     break;
                 case WalletSource.RestoreWallet:
-                    this.nextState = State.Setup_CreateRestoreUseExisting_Restore;
+                    this.nextState = State.Setup_Restore;
                     break;
                 case WalletSource.UseExistingWallet:
-                    this.nextState = State.Setup_CreateRestoreUseExisting_UseExisting;
+                    this.nextState = State.Setup_UseExisting;
                     break;
                 default:
                     await this.stateHandler.OnRegistrationCanceled();
@@ -328,31 +328,31 @@ public class StateMachine: ILogger
             }
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_Create)
+        if (this.currentState == State.Setup_Create)
         {
 
             if (!await HandleCreateWalletsAsync(NodeType.MainChain, createNewMnemonic: true))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_Select;
+                this.nextState = State.Setup_Select;
                 return true;
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_Create_Mining;
+            this.nextState = State.Setup_Create_Mining;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_Create_Mining)
+        if (this.currentState == State.Setup_Create_Mining)
         {
 
             if (!await HandleCreateWalletsAsync(NodeType.SideChain, createNewMnemonic: true))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_Select;
+                this.nextState = State.Setup_Select;
                 return true;
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_Create_AskForCollateral;
+            this.nextState = State.Setup_Create_AskForCollateral;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_Create_AskForCollateral)
+        if (this.currentState == State.Setup_Create_AskForCollateral)
         {
             this.collateralWalletCredentials.ChoosenAddress = await HandleAddressSelectionAsync(NodeType.MainChain, this.collateralWalletCredentials.Name);
 
@@ -362,52 +362,52 @@ public class StateMachine: ILogger
             }
 
             // The 3 sub-branches recombine after this and can share common states.
-            this.nextState = State.Setup_CreateRestoreUseExisting_CheckForCollateral;
+            this.nextState = State.Setup_CheckForCollateral;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_CheckForCollateral)
+        if (this.currentState == State.Setup_CheckForCollateral)
         {
             if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletCredentials.Name, RegistrationService.CollateralRequirement).ConfigureAwait(true))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_CheckForRegistrationFee;
+                this.nextState = State.Setup_CheckForRegistrationFee;
             }
             else
             {
                 await this.stateHandler.OnWaitingForCollateral();
-                this.nextState = State.Setup_CreateRestoreUseExisting_CheckForCollateral;
+                this.nextState = State.Setup_CheckForCollateral;
             }
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_CheckForRegistrationFee)
+        if (this.currentState == State.Setup_CheckForRegistrationFee)
         {
             if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletCredentials.Name, RegistrationService.FeeRequirement).ConfigureAwait(true))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_PerformRegistration;
+                this.nextState = State.Setup_PerformRegistration;
             }
             else
             {
                 string? miningAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletCredentials.Name).ConfigureAwait(true);
                 this.miningWalletCredentials.ChoosenAddress = miningAddress;
                 await this.stateHandler.OnMissingRegistrationFee(miningAddress);
-                this.nextState = State.Setup_CreateRestoreUseExisting_WaitForBalance;
+                this.nextState = State.Setup_WaitForBalance;
             }
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_WaitForBalance)
+        if (this.currentState == State.Setup_WaitForBalance)
         {
 
             if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletCredentials.Name, RegistrationService.FeeRequirement).ConfigureAwait(true))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_PerformRegistration;
+                this.nextState = State.Setup_PerformRegistration;
             }
             else
             {
                 await this.stateHandler.OnWaitingForRegistrationFee();
-                this.nextState = State.Setup_CreateRestoreUseExisting_WaitForBalance;
+                this.nextState = State.Setup_WaitForBalance;
             }
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_PerformRegistration)
+        if (this.currentState == State.Setup_PerformRegistration)
         {
             bool registeredSuccessfully = await this.registrationService.CallJoinFederationRequestAsync(this.collateralWalletCredentials, this.miningWalletCredentials).ConfigureAwait(true);
             if (!registeredSuccessfully)
@@ -417,10 +417,10 @@ public class StateMachine: ILogger
                 return true;
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_WaitForRegistration;
+            this.nextState = State.Setup_WaitForRegistration;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_WaitForRegistration)
+        if (this.currentState == State.Setup_WaitForRegistration)
         {
             if (await this.registrationService.MonitorJoinFederationRequestAsync().ConfigureAwait(true))
             {
@@ -429,79 +429,79 @@ public class StateMachine: ILogger
             }
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_Restore)
+        if (this.currentState == State.Setup_Restore)
         {
             if (!await HandleCreateWalletsAsync(NodeType.MainChain, createNewMnemonic: false))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_Select;
+                this.nextState = State.Setup_Select;
                 return true;
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_Restore_Mining;
+            this.nextState = State.Setup_Restore_Mining;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_Restore_Mining)
+        if (this.currentState == State.Setup_Restore_Mining)
         {
             if (!await HandleCreateWalletsAsync(NodeType.SideChain, createNewMnemonic: false))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_Select;
+                this.nextState = State.Setup_Select;
                 return true;
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_Create_AskForCollateral;
+            this.nextState = State.Setup_Create_AskForCollateral;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_UseExisting)
+        if (this.currentState == State.Setup_UseExisting)
         {
             this.collateralWalletCredentials = new WalletCredentials();
             if (!await HandleExistingWalletNameAsync(NodeType.MainChain, this.collateralWalletCredentials))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_Select;
+                this.nextState = State.Setup_Select;
                 return true;
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_UseExisting_CollateralPassword;
+            this.nextState = State.Setup_UseExisting_CollateralPassword;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_UseExisting_CollateralPassword)
+        if (this.currentState == State.Setup_UseExisting_CollateralPassword)
         {
             if (!await HandleExistingPasswordAsync(NodeType.MainChain, collateralWalletCredentials))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_Select;
+                this.nextState = State.Setup_Select;
                 return true;
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_UseExisting_Mining;
+            this.nextState = State.Setup_UseExisting_Mining;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_UseExisting_Mining)
+        if (this.currentState == State.Setup_UseExisting_Mining)
         {
             this.miningWalletCredentials = new WalletCredentials();
             if (!await HandleExistingWalletNameAsync(NodeType.SideChain,this.miningWalletCredentials))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_Select;
+                this.nextState = State.Setup_Select;
                 return true;
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_UseExisting_MiningPassword;
+            this.nextState = State.Setup_UseExisting_MiningPassword;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_UseExisting_MiningPassword)
+        if (this.currentState == State.Setup_UseExisting_MiningPassword)
         {
             if (!await HandleExistingPasswordAsync(NodeType.SideChain, miningWalletCredentials))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_Select;
+                this.nextState = State.Setup_Select;
                 return true;
             }
 
-            this.nextState = State.Setup_CreateRestoreUseExisting_UseExisting_CheckMainWalletSynced;
+            this.nextState = State.Setup_UseExisting_CheckMainWalletSynced;
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_UseExisting_CheckMainWalletSynced)
+        if (this.currentState == State.Setup_UseExisting_CheckMainWalletSynced)
         {
             if (await HandleWalletSyncAsync(NodeType.MainChain))
             {
-                this.nextState = State.Setup_CreateRestoreUseExisting_UseExisting_CheckSideWalletSynced;
+                this.nextState = State.Setup_UseExisting_CheckSideWalletSynced;
             }
             else
             {
@@ -509,12 +509,12 @@ public class StateMachine: ILogger
             }
         }
 
-        if (this.currentState == State.Setup_CreateRestoreUseExisting_UseExisting_CheckSideWalletSynced)
+        if (this.currentState == State.Setup_UseExisting_CheckSideWalletSynced)
         {
             if (await HandleWalletSyncAsync(NodeType.SideChain))
             {
                 // Now we can jump back into the same sequence as the other 2 sub-branches.
-                this.nextState = State.Setup_CreateRestoreUseExisting_Create_AskForCollateral;
+                this.nextState = State.Setup_Create_AskForCollateral;
             }
             else
             {
@@ -776,10 +776,10 @@ public class StateMachine: ILogger
         }
 
         int percentSynced = await this.registrationService.WalletSyncProgressAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true);
-        this.stateHandler.OnWalletSyncing(nodeType, percentSynced);
+        await this.stateHandler.OnWalletSyncing(nodeType, percentSynced);
         if (await this.registrationService.IsWalletSyncedAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
         {
-            this.stateHandler.OnWalletSynced(nodeType);
+            await this.stateHandler.OnWalletSynced(nodeType);
             return true;
         }
         else
