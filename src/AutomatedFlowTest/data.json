@@ -1,0 +1,14 @@
+{
+    "flowType": "SetupNode",
+    "networkType": "Testnet",
+    "collateralWalletSource": "UseExistingWallet",
+    "miningWalletSource": "UseExistingWallet",
+    "collateralWalletName": "TestWallet",
+    "miningWalletName": "TestWallet",
+    "collateralWalletPassword": "12345",
+    "miningWalletPassword": "12345",
+    "collateralWalletPassphrase": "",
+    "miningWalletPassphrase": "",
+    "collateralWalletMnemonic": "",
+    "miningWalletMnemonic": ""
+}

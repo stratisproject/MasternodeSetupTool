@@ -59,11 +59,11 @@ public class StateMachine: ILogger
 
     private bool IsEnabled = true;
 
-    public StateMachine(NetworkType networkType, IStateHandler stateHandler)
+    public StateMachine(NetworkType networkType, IStateHandler stateHandler, IStateHolder stateHolder = null)
     {
         this.stateHandler = stateHandler;
         this.registrationService = new RegistrationService(networkType, this);
-        this.stateHolder = new DefaultStateHolder(); 
+        this.stateHolder = stateHolder ?? new DefaultStateHolder(); 
 
         this.stateHandler.OnProgramVersionAvailable(GetInformationalVersion()).GetAwaiter().GetResult();
     }
@@ -80,8 +80,6 @@ public class StateMachine: ILogger
 
     public async Task TickAsync()
     {
-        var thread = System.Threading.Thread.CurrentThread;
-
         if (!this.IsEnabled) return;
 
         this.IsEnabled = false;
@@ -120,8 +118,6 @@ public class StateMachine: ILogger
     private async Task<bool> RunBranchAsync()
     {
         // The 'Run' branch
-
-        var thread = System.Threading.Thread.CurrentThread;
 
         if (this.stateHolder.CurrentState == State.RunMasterNode_KeyPresent)
         {

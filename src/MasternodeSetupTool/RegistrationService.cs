@@ -158,10 +158,9 @@ namespace MasternodeSetupTool
             {
                 FileName = Path.Combine(fullPath, "Stratis.CirrusMinerD.exe"),
                 Arguments = argumentBuilder.ToString(),
-                UseShellExecute = false,
+                UseShellExecute = true,
                 WindowStyle = ProcessWindowStyle.Minimized,
                 WorkingDirectory = fullPath,
-                RedirectStandardError = true,
             };
 
             var process = Process.Start(startInfo);
