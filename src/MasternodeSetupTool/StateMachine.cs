@@ -12,6 +12,7 @@ public class StateMachine: ILogger
     public enum State
     {
         Begin,
+        End,
         RunMasterNode_KeyPresent,
         Run_StartMainChain,
         Run_MainChainSynced,
@@ -125,7 +126,7 @@ public class StateMachine: ILogger
             {
                 await this.stateHandler.OnFederationKeyMissing();
 
-                ResetState();
+                GoToEndState();
 
                 return true;
             }
@@ -183,7 +184,7 @@ public class StateMachine: ILogger
             await this.registrationService.StartMasterNodeDashboardAsync().ConfigureAwait(true);
             this.registrationService.LaunchBrowser($"http://localhost:{RegistrationService.DashboardPort}");
 
-            ResetState();
+            GoToEndState();
 
             return true;
         }
@@ -197,7 +198,7 @@ public class StateMachine: ILogger
         {
             if (!await this.stateHandler.OnAskForEULA())
             {
-                ResetState();
+                GoToEndState();
                 return true;
             }
 
@@ -235,7 +236,7 @@ public class StateMachine: ILogger
             if (!await this.registrationService.StartNodeAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true))
             {
                 await this.stateHandler.OnNodeFailedToStart(NodeType.MainChain);
-                ResetState();
+                GoToEndState();
 
                 return true;
             }
@@ -259,7 +260,7 @@ public class StateMachine: ILogger
             if (!await this.registrationService.StartNodeAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true))
             {
                 await this.stateHandler.OnNodeFailedToStart(NodeType.SideChain);
-                ResetState();
+                GoToEndState();
 
                 return true;
             }
@@ -290,7 +291,7 @@ public class StateMachine: ILogger
                 else
                 {
                     await this.stateHandler.OnAlreadyMember();
-                    ResetState();
+                    GoToEndState();
                     return true;
                 }
             }
@@ -314,7 +315,7 @@ public class StateMachine: ILogger
                     break;
                 default:
                     await this.stateHandler.OnRegistrationCanceled();
-                    ResetState();
+                    GoToEndState();
                     return true;
             }
         }
@@ -404,7 +405,7 @@ public class StateMachine: ILogger
             if (!registeredSuccessfully)
             {
                 await this.stateHandler.OnRegistrationFailed();
-                ResetState();
+                GoToEndState();
                 return true;
             }
 
@@ -833,9 +834,9 @@ public class StateMachine: ILogger
         return true;
     }
 
-    private void ResetState()
+    private void GoToEndState()
     {
-        this.stateHolder.NextState = State.Begin;
+        this.stateHolder.NextState = State.End;
     }
 
     public static string? GetInformationalVersion() =>

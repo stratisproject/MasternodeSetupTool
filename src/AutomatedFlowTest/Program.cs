@@ -7,9 +7,10 @@ class Program
     {
         Configuration configuration = TryGetConfigurationFromParams(args) ?? new Configuration();
 
-        var stateHandler = new AutomatedStateHandler(configuration);
+        IStateHandler stateHandler = new AutomatedStateHandler(configuration);
+        IStateHolder stateHolder = new DefaultStateHolder(repeatOnEndState: false);
 
-        var stateMachine = new StateMachine(configuration.networkType, stateHandler);
+        var stateMachine = new StateMachine(configuration.networkType, stateHandler, stateHolder);
 
         Task.Run(async () =>
         {
@@ -25,6 +26,11 @@ class Program
 
             while (true)
             {
+                if (stateHolder.CurrentState == StateMachine.State.End)
+                {
+                    return;
+                }
+
                 await stateMachine.TickAsync();
                 await Task.Delay(1000);
             }

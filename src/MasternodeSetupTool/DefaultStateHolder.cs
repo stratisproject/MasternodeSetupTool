@@ -1,15 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MasternodeSetupTool
+﻿namespace MasternodeSetupTool
 {
     public class DefaultStateHolder : IStateHolder
     {
-        public StateMachine.State currentState_;
+        public StateMachine.State currentState_ = StateMachine.State.Begin;
         public StateMachine.State? nextState_;
+
+        private bool repeatOnEndState;
+
+        public DefaultStateHolder(bool repeatOnEndState = true)
+        {
+            this.repeatOnEndState = repeatOnEndState;
+        }
 
         public StateMachine.State CurrentState
         {
@@ -42,6 +43,10 @@ namespace MasternodeSetupTool
             StateMachine.State? nextState = this.NextState;
             if (nextState != null)
             {
+                if (nextState == StateMachine.State.End && this.repeatOnEndState) 
+                {
+                    nextState = StateMachine.State.Begin;
+                }
                 this.CurrentState = (StateMachine.State)nextState;
                 this.NextState = null;
             }

@@ -1,10 +1,5 @@
-﻿// See https://aka.ms/new-console-template for more information
-using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.IL;
-using MasternodeSetupTool;
-using NBitcoin;
-using Stratis.Bitcoin.Features.Wallet.Models;
-using Stratis.SmartContracts;
+﻿using MasternodeSetupTool;
+
 using NodeType = MasternodeSetupTool.NodeType;
 
 class AutomatedStateHandler : IStateHandler
