@@ -16,7 +16,7 @@ This repository depends on two projects:
 
 ![Algorithm scheme](Documentation/algorithm.svg)
 
-## [License](Documentation/LICENSE) 
+## [License](LICENSE) 
 
 > MIT License
 >
