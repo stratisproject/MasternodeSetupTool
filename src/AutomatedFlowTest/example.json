@@ -1,8 +1,15 @@
 {
     "flowType": "SetupNode",
+    "writeConsoleLog": true,
+    "logFilePath": null,
     "networkType": "Testnet",
     "collateralWalletSource": "UseExistingWallet",
     "miningWalletSource": "UseExistingWallet",
+    "confirmEULA": true,
+    "confirmNewFederationKey": false,
+    "confirmRunIfAlreadyMember": true,
+    "confirmMnemonic": true,
+    "confirmReenterPassword": true,
     "collateralWalletName": "TestWallet",
     "miningWalletName": "TestWallet",
     "collateralWalletPassword": "12345",
@@ -11,6 +18,6 @@
     "miningWalletPassphrase": "",
     "collateralWalletMnemonic": "",
     "miningWalletMnemonic": "",
-    "writeConsoleLog": true,
-    "logFilePath": "C:\\Users\\Administrator\\Source\\Repos\\stratisproject\\MasternodeSetupTool\\src\\AutomatedFlowTest\\log.txt"
+    "collateralWalletAddress": null,
+    "miningWalletAddress": null
 }

@@ -56,20 +56,20 @@ public class AutomatedStateHandler : IStateHandler
     public async Task<bool> OnAskForEULA()
     {
         this.logger.Log($"Asked for EULA");
-        return true;
+        return this.configuration.confirmEULA;
     }
 
     public async Task<bool> OnAskForMnemonicConfirmation(NodeType nodeType, string mnemonic)
     {
         this.logger.Log($"Asked for mnemonic confirmation");
         this.logger.Log($"Mnemonic: {mnemonic}");
-        return true;
+        return this.configuration.confirmMnemonic;
     }
 
     public async Task<bool> OnAskForNewFederationKey()
     {
-        this.logger.Log($"Asked for new federation key, deny");
-        return false;
+        this.logger.Log($"Asked for new federation key");
+        return this.configuration.confirmNewFederationKey;
     }
 
     public async Task<string?> OnAskForPassphrase(NodeType nodeType)
@@ -144,26 +144,37 @@ public class AutomatedStateHandler : IStateHandler
 
     public async Task<bool> OnAskReenterPassword(NodeType nodeType)
     {
-        this.logger.Log($"Asked to reenter password, deny");
-        return false;
+        this.logger.Log($"Asked to reenter password");
+
+        return this.configuration.confirmReenterPassword;
     }
 
     public async Task<bool> OnAskToRunIfAlreadyMember()
     {
         this.logger.Log($"Already a member, stopping");
-        return false;
+        return this.configuration.confirmRunIfAlreadyMember;
     }
 
     public async Task<string?> OnChooseAddress(List<AddressItem> addresses, NodeType nodeType)
     {
-        this.logger.Log($"Choosing address {addresses.FirstOrDefault()?.Address}");
-        return addresses.FirstOrDefault()?.Address;
+        string? address = (nodeType == NodeType.MainChain
+            ? this.configuration.collateralWalletAddress
+            : this.configuration.miningWalletAddress)
+            ?? addresses.FirstOrDefault().Address;
+
+        this.logger.Log($"Choosing address {address}");
+        return address;
     }
 
     public async Task<string?> OnChooseWallet(List<WalletItem> wallets, NodeType nodeType)
     {
-        this.logger.Log($"Choosing wallet {wallets.FirstOrDefault()?.Name}");
-        return wallets.FirstOrDefault()?.Name;
+        string? walletName = (nodeType == NodeType.MainChain 
+            ? this.configuration.collateralWalletName 
+            : this.configuration.miningWalletName)
+            ?? wallets.FirstOrDefault().Name;
+
+        this.logger.Log($"Choosing {nodeType} wallet {walletName}");
+        return walletName;
     }
 
     public async Task OnCreateWalletFailed(NodeType nodeType)
