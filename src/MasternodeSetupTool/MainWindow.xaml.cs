@@ -8,7 +8,10 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using NBitcoin;
+using Stratis.Bitcoin.Features.Wallet.Models;
+using Stratis.SmartContracts;
 using Color = System.Windows.Media.Color;
 
 namespace MasternodeSetupTool
@@ -24,6 +27,12 @@ namespace MasternodeSetupTool
 
         private readonly StackPanel stackPanel;
         private readonly TextBlock statusBar;
+
+        private string collateralWalletName;
+        private string miningWalletName;
+
+        private string collateralAddress;
+        private string miningAddress;
 
         private bool createdButtons = false;
 
@@ -190,6 +199,15 @@ namespace MasternodeSetupTool
 
         public async Task OnStart()
         {
+            this.collateralWalletName = null;
+            this.miningWalletName = null;
+
+            this.collateralAddress = null;
+            this.miningAddress = null;
+
+            this.UpdateWalletInfoLabel(NodeType.MainChain);
+            this.UpdateWalletInfoLabel(NodeType.SideChain);
+
             if (!this.createdButtons)
             {
                 this.createdButtons = true;
@@ -233,7 +251,6 @@ namespace MasternodeSetupTool
         {
             if (version != null)
             {
-                var thread1 = System.Threading.Thread.CurrentThread;
                 this.VersionText.Text = $"Version: {version}";
             }
         }
@@ -475,12 +492,30 @@ namespace MasternodeSetupTool
 
         public async Task OnShowWalletName(NodeType nodeType, string walletName)
         {
-            //TODO
+            if (nodeType == NodeType.MainChain)
+            {
+                this.collateralWalletName = walletName;
+            } 
+            else
+            {
+                this.miningWalletName = walletName;
+            }
+
+            this.UpdateWalletInfoLabel(nodeType);
         }
 
         public async Task OnShowWalletAddress(NodeType nodeType, string address)
         {
-            //TODO
+            if (nodeType == NodeType.MainChain)
+            {
+                this.collateralAddress = address;
+            }
+            else
+            {
+                this.miningAddress = address;
+            }
+
+            this.UpdateWalletInfoLabel(nodeType);
         }
 
         public async Task OnRestoreWalletFailed(NodeType nodeType)
@@ -496,6 +531,39 @@ namespace MasternodeSetupTool
         public async Task OnResyncFailed(NodeType nodeType)
         {
             LogError($"Cannot resync {WalletTypeName(nodeType)} wallet, aborting...");
+        }
+
+        private void UpdateWalletInfoLabel(NodeType nodeType)
+        {
+            string? name;
+            string? address;
+
+            TextBlock target;
+
+            if (nodeType == NodeType.MainChain)
+            {
+                name = this.collateralWalletName;
+                address = this.collateralAddress;
+                target = this.CollateralAddressText;
+            }
+            else
+            {
+                name = this.miningWalletName;
+                address = this.miningAddress;
+                target = this.MiningAddressText;
+            }
+
+            string label = name;
+            if (label == null)
+            {
+                label = "";
+            } else
+            {
+                if (address != null)
+                    label += $": {address}";
+            }
+
+            target.Text = label;
         }
     }
 }
