@@ -71,7 +71,7 @@ namespace MasternodeSetupTool
 
             this.timer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(1)
+                Interval = TimeSpan.FromMilliseconds(200)
             };
 
             this.timer.Tick += StateMachine_TickAsync;
