@@ -8,10 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 using NBitcoin;
-using Stratis.Bitcoin.Features.Wallet.Models;
-using Stratis.SmartContracts;
 using Color = System.Windows.Media.Color;
 
 namespace MasternodeSetupTool
