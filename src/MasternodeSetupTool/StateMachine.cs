@@ -1,4 +1,9 @@
-﻿using static MasternodeSetupTool.RegistrationService;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Threading.Tasks;
+using NBitcoin;
+using static MasternodeSetupTool.RegistrationService;
 
 namespace MasternodeSetupTool;
 
@@ -321,6 +326,7 @@ public class StateMachine: ILogger
                 default:
                     await this.stateHandler.OnRegistrationCanceled();
                     GoToEndState();
+                    break;
             }
             return true;
         }
