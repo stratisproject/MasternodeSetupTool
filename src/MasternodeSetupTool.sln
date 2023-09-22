@@ -35,7 +35,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.FederatedSidechains
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MasternodeSetupTool.Tests", "MasternodeSetupTool.Tests\MasternodeSetupTool.Tests.csproj", "{9BC703A3-4C17-481A-B9E7-BF7DA0275D16}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutomatedFlowTest", "AutomatedFlowTest\AutomatedFlowTest.csproj", "{7EFD772D-AC69-477C-A731-7EABF10B8DE6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutomatedFlowTest", "AutomatedFlowTest\AutomatedFlowTest.csproj", "{7EFD772D-AC69-477C-A731-7EABF10B8DE6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{486CE220-C929-4125-AB22-9ADBCC4CB293}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -67,6 +69,10 @@ Global
 		{7EFD772D-AC69-477C-A731-7EABF10B8DE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7EFD772D-AC69-477C-A731-7EABF10B8DE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7EFD772D-AC69-477C-A731-7EABF10B8DE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{486CE220-C929-4125-AB22-9ADBCC4CB293}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{486CE220-C929-4125-AB22-9ADBCC4CB293}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{486CE220-C929-4125-AB22-9ADBCC4CB293}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{486CE220-C929-4125-AB22-9ADBCC4CB293}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
