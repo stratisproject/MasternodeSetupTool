@@ -36,7 +36,7 @@ class Program
                 }
 
                 await stateMachine.TickAsync();
-                await Task.Delay(1000);
+                await Task.Delay(TimeSpan.FromMilliseconds(200));
             }
         }).Wait();
     }
