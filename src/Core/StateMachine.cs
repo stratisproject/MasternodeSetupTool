@@ -46,7 +46,7 @@ public class StateMachine: ILogger
         Setup_UseExisting_CheckSideWalletSynced
     }
 
-    private readonly RegistrationService registrationService;
+    private readonly IRegistrationService registrationService;
     private readonly IStateHandler stateHandler;
 
     private IStateHolder stateHolder;
@@ -60,13 +60,15 @@ public class StateMachine: ILogger
 
     private bool IsEnabled = true;
 
-    public StateMachine(NetworkType networkType, IStateHandler stateHandler, IStateHolder stateHolder = null)
+    public StateMachine(
+        NetworkType networkType, 
+        IStateHandler stateHandler,
+        IRegistrationService? registrationService = null, 
+        IStateHolder? stateHolder = null)
     {
         this.stateHandler = stateHandler;
-        this.registrationService = new RegistrationService(networkType, this);
+        this.registrationService = registrationService ?? new RegistrationService(networkType, this);
         this.stateHolder = stateHolder ?? new DefaultStateHolder(); 
-
-        this.stateHandler.OnProgramVersionAvailable(GetInformationalVersion()).GetAwaiter().GetResult();
     }
 
     public void OnRunNode()
@@ -88,6 +90,7 @@ public class StateMachine: ILogger
         if (this.stateHolder.CurrentState == State.Begin)
         {
             await this.stateHandler.OnStart();
+            await this.stateHandler.OnProgramVersionAvailable(GetInformationalVersion());
         }
 
         if (this.stateHolder.NextState == null)
