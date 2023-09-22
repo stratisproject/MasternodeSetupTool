@@ -1,4 +1,5 @@
-﻿using MasternodeSetupTool;
+﻿using AutomatedFlowTest;
+using MasternodeSetupTool;
 using Newtonsoft.Json;
 
 class Program
@@ -7,10 +8,13 @@ class Program
     {
         Configuration configuration = TryGetConfigurationFromParams(args) ?? new Configuration();
 
-        IStateHandler stateHandler = new AutomatedStateHandler(configuration);
+        IStateHandler stateHandler = new AutomatedStateHandler(configuration, BuildLogger(configuration));
         IStateHolder stateHolder = new DefaultStateHolder(repeatOnEndState: false);
 
-        var stateMachine = new StateMachine(configuration.networkType, stateHandler, stateHolder);
+        var stateMachine = new StateMachine(
+            networkType: configuration.networkType, 
+            stateHandler: stateHandler,
+            stateHolder: stateHolder);
 
         Task.Run(async () =>
         {
@@ -68,4 +72,23 @@ class Program
         return null;
     }
 
+    private static AutomatedStateHandler.ILogger BuildLogger(Configuration configuration)
+    {
+        List<AutomatedStateHandler.ILogger> loggers = new List<AutomatedStateHandler.ILogger>();
+
+        if (configuration != null)
+        {
+            if (configuration.writeConsoleLog)
+            {
+                loggers.Add(new ConsoleLogger());
+            }
+
+            if (!string.IsNullOrEmpty(configuration.logFilePath))
+            {
+                loggers.Add(new FileLogger(configuration.logFilePath));
+            }
+        }
+
+        return new CompositeLogger(loggers);
+    }
 }

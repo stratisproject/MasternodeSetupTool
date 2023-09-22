@@ -2,44 +2,46 @@
 
 using NodeType = MasternodeSetupTool.NodeType;
 
-class AutomatedStateHandler : IStateHandler
+public class AutomatedStateHandler : IStateHandler
 {
     private Configuration configuration;
+    private ILogger logger;
 
-    public AutomatedStateHandler(Configuration configuration)
+    public AutomatedStateHandler(Configuration configuration, ILogger logger)
     {
         this.configuration = configuration;
+        this.logger = logger;
     }
 
     public void Error(string message)
     {
-        Console.WriteLine($"Error: {message}");
+        this.logger.Log($"Error: {message}");
     }
 
     public void Error(Exception exception)
     {
-        Console.WriteLine($"Error: {exception}");
+        this.logger.Log($"Error: {exception}");
     }
 
     public void Error(string message, Exception exception)
     {
-        Console.WriteLine($"Error: {message}");
-        Console.WriteLine($"Error: {exception}");
+        this.logger.Log($"Error: {message}");
+        this.logger.Log($"Error: {exception}");
     }
 
     public void Info(string message, string? updateTag = null)
     {
-        Console.WriteLine($"Info: {message}");
+        this.logger.Log($"Info: {message}");
     }
 
     public async Task OnAlreadyMember()
     {
-        Console.WriteLine("This node is already a member");
+        this.logger.Log("This node is already a member");
     }
 
     public async Task<string?> OnAskCreatePassword(NodeType nodeType)
     {
-        Console.WriteLine($"Asked to create a password for {nodeType} wallet");
+        this.logger.Log($"Asked to create a password for {nodeType} wallet");
 
         if (nodeType == NodeType.MainChain)
         {
@@ -53,26 +55,26 @@ class AutomatedStateHandler : IStateHandler
 
     public async Task<bool> OnAskForEULA()
     {
-        Console.WriteLine($"Asked for EULA");
+        this.logger.Log($"Asked for EULA");
         return true;
     }
 
     public async Task<bool> OnAskForMnemonicConfirmation(NodeType nodeType, string mnemonic)
     {
-        Console.WriteLine($"Asked for mnemonic confirmation");
-        Console.WriteLine($"Mnemonic: {mnemonic}");
+        this.logger.Log($"Asked for mnemonic confirmation");
+        this.logger.Log($"Mnemonic: {mnemonic}");
         return true;
     }
 
     public async Task<bool> OnAskForNewFederationKey()
     {
-        Console.WriteLine($"Asked for new federation key, deny");
+        this.logger.Log($"Asked for new federation key, deny");
         return false;
     }
 
     public async Task<string?> OnAskForPassphrase(NodeType nodeType)
     {
-        Console.WriteLine($"Asked to create a passphrase for {nodeType} wallet");
+        this.logger.Log($"Asked to create a passphrase for {nodeType} wallet");
 
         if (nodeType == NodeType.MainChain)
         {
@@ -86,7 +88,7 @@ class AutomatedStateHandler : IStateHandler
 
     public async Task<string?> OnAskForUserMnemonic(NodeType nodeType)
     {
-        Console.WriteLine($"Asked a mnemonic for {nodeType} wallet");
+        this.logger.Log($"Asked a mnemonic for {nodeType} wallet");
 
         if (nodeType == NodeType.MainChain)
         {
@@ -100,7 +102,7 @@ class AutomatedStateHandler : IStateHandler
 
     public async Task<string?> OnAskForWalletName(NodeType nodeType, bool newWallet)
     {
-        Console.WriteLine($"Asked a wallet name for {nodeType} wallet");
+        this.logger.Log($"Asked a wallet name for {nodeType} wallet");
 
         if (nodeType == NodeType.MainChain)
         {
@@ -114,7 +116,7 @@ class AutomatedStateHandler : IStateHandler
 
     public async Task<string?> OnAskForWalletPassword(NodeType nodeType)
     {
-        Console.WriteLine($"Asked a password for {nodeType} wallet");
+        this.logger.Log($"Asked a password for {nodeType} wallet");
 
         if (nodeType == NodeType.MainChain)
         {
@@ -128,7 +130,7 @@ class AutomatedStateHandler : IStateHandler
 
     public async Task<WalletSource?> OnAskForWalletSource(NodeType nodeType)
     {
-        Console.WriteLine($"Asked a wallet source for {nodeType} wallet");
+        this.logger.Log($"Asked a wallet source for {nodeType} wallet");
 
         if (nodeType == NodeType.MainChain)
         {
@@ -142,137 +144,142 @@ class AutomatedStateHandler : IStateHandler
 
     public async Task<bool> OnAskReenterPassword(NodeType nodeType)
     {
-        Console.WriteLine($"Asked to reenter password, deny");
+        this.logger.Log($"Asked to reenter password, deny");
         return false;
     }
 
     public async Task<bool> OnAskToRunIfAlreadyMember()
     {
-        Console.WriteLine($"Already a member, stopping");
+        this.logger.Log($"Already a member, stopping");
         return false;
     }
 
     public async Task<string?> OnChooseAddress(List<AddressItem> addresses, NodeType nodeType)
     {
-        Console.WriteLine($"Choosing address {addresses.FirstOrDefault()?.Address}");
+        this.logger.Log($"Choosing address {addresses.FirstOrDefault()?.Address}");
         return addresses.FirstOrDefault()?.Address;
     }
 
     public async Task<string?> OnChooseWallet(List<WalletItem> wallets, NodeType nodeType)
     {
-        Console.WriteLine($"Choosing wallet {wallets.FirstOrDefault()?.Name}");
+        this.logger.Log($"Choosing wallet {wallets.FirstOrDefault()?.Name}");
         return wallets.FirstOrDefault()?.Name;
     }
 
     public async Task OnCreateWalletFailed(NodeType nodeType)
     {
-        Console.WriteLine($"{nodeType} wallet creation failed");
+        this.logger.Log($"{nodeType} wallet creation failed");
     }
 
     public async Task OnFederationKeyMissing()
     {
-        Console.WriteLine($"Missing federation key");
+        this.logger.Log($"Missing federation key");
     }
 
     public async Task OnMissingRegistrationFee(string address)
     {
-        Console.WriteLine($"Missing registration fee on address: {address}");
+        this.logger.Log($"Missing registration fee on address: {address}");
     }
 
     public async Task OnMnemonicExists(NodeType nodeType)
     {
-        Console.WriteLine($"{nodeType} wallet mnemonic already exists");
+        this.logger.Log($"{nodeType} wallet mnemonic already exists");
     }
 
     public async Task OnMnemonicIsInvalid(NodeType nodeType)
     {
-        Console.WriteLine($"{nodeType} wallet mnemonic is invalid");
+        this.logger.Log($"{nodeType} wallet mnemonic is invalid");
     }
 
     public async Task OnNodeFailedToStart(NodeType nodeType, string? reason = null)
     {
-        Console.WriteLine($"{nodeType} node failed to start");
-        Console.WriteLine($"Reason: {reason}");
+        this.logger.Log($"{nodeType} node failed to start");
+        this.logger.Log($"Reason: {reason}");
     }
 
     public async Task OnProgramVersionAvailable(string? version)
     {
-        Console.WriteLine($"App version: {version ?? "null"}");
+        this.logger.Log($"App version: {version ?? "null"}");
     }
 
     public async Task OnRegistrationCanceled()
     {
-        Console.WriteLine($"Registration canceled");
+        this.logger.Log($"Registration canceled");
     }
 
     public async Task OnRegistrationComplete()
     {
-        Console.WriteLine($"Registration complete");
+        this.logger.Log($"Registration complete");
     }
 
     public async Task OnRegistrationFailed()
     {
-        Console.WriteLine($"Registration failed");
+        this.logger.Log($"Registration failed");
     }
 
     public async Task OnRestoreWalletFailed(NodeType nodeType)
     {
-        Console.WriteLine($"{nodeType} wallet restore failed");
+        this.logger.Log($"{nodeType} wallet restore failed");
     }
 
     public async Task OnResyncFailed(NodeType nodeType)
     {
-        Console.WriteLine($"{nodeType} wallet resync failed");
+        this.logger.Log($"{nodeType} wallet resync failed");
     }
 
     public async Task OnShowNewFederationKey(string pubKey, string savePath)
     {
-        Console.WriteLine($"New pubKey is: {pubKey}");
-        Console.WriteLine($"New savePath is: {savePath}");
+        this.logger.Log($"New pubKey is: {pubKey}");
+        this.logger.Log($"New savePath is: {savePath}");
     }
 
     public async Task OnShowWalletAddress(NodeType nodeType, string address)
     {
-        Console.WriteLine($"{nodeType} wallet address is {address}");
+        this.logger.Log($"{nodeType} wallet address is {address}");
     }
 
     public async Task OnShowWalletName(NodeType nodeType, string walletName)
     {
-        Console.WriteLine($"{nodeType} wallet name is {walletName}");
+        this.logger.Log($"{nodeType} wallet name is {walletName}");
     }
 
     public async Task OnStart()
     {
-        Console.WriteLine($"Started");
+        this.logger.Log($"Started");
     }
 
     public async Task OnWaitingForCollateral()
     {
-        Console.WriteLine($"Waiting for collateral");
+        this.logger.Log($"Waiting for collateral");
     }
 
     public async Task OnWaitingForRegistrationFee()
     {
-        Console.WriteLine($"Waiting for registration fee");
+        this.logger.Log($"Waiting for registration fee");
     }
 
     public async Task OnWalletExistsOrInvalid(NodeType nodeType)
     {
-        Console.WriteLine($"{nodeType} wallet exists or invalid");
+        this.logger.Log($"{nodeType} wallet exists or invalid");
     }
 
     public async Task OnWalletNameExists(NodeType nodeType)
     {
-        Console.WriteLine($"{nodeType} wallet name already exists");
+        this.logger.Log($"{nodeType} wallet name already exists");
     }
 
     public async Task OnWalletSynced(NodeType nodeType)
     {
-        Console.WriteLine($"{nodeType} wallet synced");
+        this.logger.Log($"{nodeType} wallet synced");
     }
 
     public async Task OnWalletSyncing(NodeType nodeType, int progress)
     {
-        Console.WriteLine($"{nodeType} wallet is syncing, {progress}%");
+        this.logger.Log($"{nodeType} wallet is syncing, {progress}%");
+    }
+
+    public interface ILogger
+    {
+        void Log(string message);
     }
 }

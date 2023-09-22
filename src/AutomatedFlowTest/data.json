@@ -10,5 +10,7 @@
     "collateralWalletPassphrase": "",
     "miningWalletPassphrase": "",
     "collateralWalletMnemonic": "",
-    "miningWalletMnemonic": ""
+    "miningWalletMnemonic": "",
+    "writeConsoleLog": true,
+    "logFilePath": "C:\\Users\\Administrator\\Source\\Repos\\stratisproject\\MasternodeSetupTool\\src\\AutomatedFlowTest\\log.txt"
 }

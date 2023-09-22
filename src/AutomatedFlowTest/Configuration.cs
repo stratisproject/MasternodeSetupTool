@@ -21,6 +21,9 @@ public class Configuration
 
     public string collateralWalletMnemonic = "";
     public string miningWalletMnemonic = "";
+
+    public bool writeConsoleLog = true;
+    public string? logFilePath = null;
 }
 
 public enum FlowType
