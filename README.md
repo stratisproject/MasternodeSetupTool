@@ -1,5 +1,10 @@
 # MasterNode Setup Tool
 
+## Documentation
+
+The documentation can be found on [the official Stratis Academy portal](https://academy.stratisplatform.com/Operation%20Guides/InterFlux%20Masternodes/Running%20Masternode/masternode-setup-tool.html)
+
+
 ## Dependencies
 
 This repository depends on two projects:
