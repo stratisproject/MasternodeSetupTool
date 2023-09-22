@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-      <ProjectReference Include="..\MasternodeSetupTool\MasternodeSetupTool.csproj" />
+    <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
 
 </Project>
