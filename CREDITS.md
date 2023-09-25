@@ -16,6 +16,10 @@ Thank you to all the people who have already contributed to this repository
 
 [Nikita Koifman](https://github.com/fr0stnk) - testing & feature requests
 
+[Iain McCain](https://github.com/StratisIain) - product management
+
+[Nicolas Chabanovsky](https://github.com/chabanovsky) - project management
+
 [Kevin Loubser](https://github.com/zeptin) - implemented the first version of this tool
 
 [Francois de la Rouviere](https://github.com/fassadlr) - created the [legacy implementation](https://github.com/stratisproject/StratisFullNode/tree/master/src/Stratis.External.Masternodes)
