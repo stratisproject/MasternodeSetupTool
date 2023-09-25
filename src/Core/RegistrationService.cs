@@ -1,17 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
 using Flurl;
 using Flurl.Http;
-using ICSharpCode.Decompiler.CSharp.Syntax;
-using LiteDB;
 using NBitcoin;
 using NBitcoin.DataEncoders;
 using Newtonsoft.Json;
@@ -27,7 +17,7 @@ using Stratis.Sidechains.Networks;
 
 namespace MasternodeSetupTool
 {
-    public sealed class RegistrationService
+    public sealed class RegistrationService : IRegistrationService
     {
         public const int CollateralRequirement = 100_000;
         public const int FeeRequirement = 500;
@@ -138,7 +128,7 @@ namespace MasternodeSetupTool
             }
 
             if (this.networkType == NetworkType.Testnet)
-            {               
+            {
                 argumentBuilder.Append("-testnet ");
             }
 
@@ -158,10 +148,9 @@ namespace MasternodeSetupTool
             {
                 FileName = Path.Combine(fullPath, "Stratis.CirrusMinerD.exe"),
                 Arguments = argumentBuilder.ToString(),
-                UseShellExecute = false,
+                UseShellExecute = true,
                 WindowStyle = ProcessWindowStyle.Minimized,
                 WorkingDirectory = fullPath,
-                RedirectStandardError = true,
             };
 
             var process = Process.Start(startInfo);
@@ -170,7 +159,7 @@ namespace MasternodeSetupTool
 
             if (process == null || process.HasExited)
             {
-                Error($"{nodeType} node process failed to start, exiting..."); 
+                Error($"{nodeType} node process failed to start, exiting...");
 
                 return false;
             }
@@ -205,7 +194,7 @@ namespace MasternodeSetupTool
                     .WithHeader("Content-Type", "application/json-patch+json")
                     .PostAsync();
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
                 Error($"Can not shutdown {nodeType}.");
                 Error(e);
@@ -585,7 +574,7 @@ namespace MasternodeSetupTool
                 return walletBalanceModel.AccountsBalances.FirstOrDefault()
                     ?.Addresses?.Select(item => new AddressItem(item.Address, item.AmountConfirmed))
                     ?.ToList();
-            } 
+            }
             catch
             {
                 return null;
@@ -605,7 +594,7 @@ namespace MasternodeSetupTool
             return new WalletItem(name: walletName, balance: walletBalanceModel.AccountsBalances[0].SpendableAmount);
         }
 
-        public class WalletCollisionException: Exception { }
+        public class WalletCollisionException : Exception { }
 
         public async Task<bool> ResyncWalletAsync(int apiPort, string walletName)
         {
@@ -774,16 +763,16 @@ namespace MasternodeSetupTool
             return sendActionResult.TransactionId.ToString();
         }
 
-        public async Task<bool> CallJoinFederationRequestAsync(string collateralAddress, string collateralWallet, string collateralPassword, string cirrusWalletName, string cirrusWalletPassword)
+        public async Task<bool> CallJoinFederationRequestAsync(WalletCredentials collateralCredentials, WalletCredentials miningCredentials)
         {
             var request = new JoinFederationRequestModel()
             {
-                CollateralAddress = collateralAddress,
-                CollateralWalletName = collateralWallet,
-                CollateralWalletPassword = collateralPassword,
+                CollateralAddress = collateralCredentials.ChoosenAddress,
+                CollateralWalletName = collateralCredentials.Name,
+                CollateralWalletPassword = collateralCredentials.Password,
                 WalletAccount = "account 0",
-                WalletName = cirrusWalletName,
-                WalletPassword = cirrusWalletPassword
+                WalletName = miningCredentials.Name,
+                WalletPassword = miningCredentials.Password
             };
 
             try
@@ -794,7 +783,7 @@ namespace MasternodeSetupTool
                     .ReceiveJson<JoinFederationResponseModel>()
                     .ConfigureAwait(false);
 
-                if (response != null && !string.IsNullOrEmpty(response.MinerPublicKey)) 
+                if (response != null && !string.IsNullOrEmpty(response.MinerPublicKey))
                 {
                     Status($"SUCCESS: The masternode request has now been submitted to the network");
                     return true;
@@ -935,7 +924,7 @@ namespace MasternodeSetupTool
             }
 
             Status($"Starting the masternode dashboard on {this.networkType}. Start up arguments: {argumentBuilder}");
-            
+
             string osSpecificCommand = "CMD.EXE";
             string osSpecificArguments = $"/K \"{argumentBuilder}\"";
 

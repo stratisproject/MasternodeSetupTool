@@ -1,10 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Windows;
-using Flurl.Http;
-using Flurl.Http.Configuration;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Stratis.Bitcoin.Utilities.JsonConverters;
+﻿using System.Windows;
 
 namespace MasternodeSetupTool
 {
@@ -15,19 +9,7 @@ namespace MasternodeSetupTool
     {
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            FlurlHttp.Configure(settings => {
-                var jsonSettings = new JsonSerializerSettings
-                {
-                    Converters = new List<JsonConverter>()
-                    {
-                        new DateTimeToUnixTimeConverter(),
-                        new IsoDateTimeConverter(),
-                    }
-                };
-
-                settings.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
-            });
-
+            CoreLib.Initialize();
 
             var wnd = new MainWindow(e.Args);
             wnd.Show();

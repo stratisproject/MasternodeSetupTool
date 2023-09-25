@@ -1,0 +1,23 @@
+{
+    "flowType": "SetupNode",
+    "writeConsoleLog": true,
+    "logFilePath": null,
+    "networkType": "Testnet",
+    "collateralWalletSource": "UseExistingWallet",
+    "miningWalletSource": "UseExistingWallet",
+    "confirmEULA": true,
+    "confirmNewFederationKey": false,
+    "confirmRunIfAlreadyMember": true,
+    "confirmMnemonic": true,
+    "confirmReenterPassword": true,
+    "collateralWalletName": "TestWallet",
+    "miningWalletName": "TestWallet",
+    "collateralWalletPassword": "12345",
+    "miningWalletPassword": "12345",
+    "collateralWalletPassphrase": "",
+    "miningWalletPassphrase": "",
+    "collateralWalletMnemonic": "",
+    "miningWalletMnemonic": "",
+    "collateralWalletAddress": null,
+    "miningWalletAddress": null
+}

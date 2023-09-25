@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -9,10 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
-using CSharpFunctionalExtensions;
 using NBitcoin;
-using Stratis.Bitcoin.Features.Wallet.Models;
-using static MasternodeSetupTool.RegistrationService;
 using Color = System.Windows.Media.Color;
 
 namespace MasternodeSetupTool
@@ -20,7 +16,7 @@ namespace MasternodeSetupTool
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, ILogger
+    public partial class MainWindow : Window, IStateHandler
     {
         private const string MainStackPanelTag = "Main";
         private const string StatusBarTextBlockTag = "txtStatusBar";
@@ -29,49 +25,17 @@ namespace MasternodeSetupTool
         private readonly StackPanel stackPanel;
         private readonly TextBlock statusBar;
 
-        private readonly RegistrationService registrationService;
+        private string collateralWalletName;
+        private string miningWalletName;
+
+        private string collateralAddress;
+        private string miningAddress;
+
+        private bool createdButtons = false;
+
+        private StateMachine stateMachine;
 
         private readonly DispatcherTimer timer;
-
-        private string currentState = "Begin";
-        private string? nextState = null;
-
-        private bool createdButtons;
-
-        private string? collateralWalletMnemonic;
-        private string? miningWalletMnemonic;
-
-        private string? collateralWalletPassphrase;
-        private string? miningWalletPassphrase;
-
-        private string? collateralWalletPassword;
-        private string? miningWalletPassword;
-
-        private string? collateralWalletName;
-        private string? miningWalletName;
-
-        private string? _collateralAddress;
-        private string? _miningAddress;
-
-        private string? CollateralAddress
-        {
-            get => this._collateralAddress;
-            set
-            {
-                this._collateralAddress = value;
-                this.CollateralAddressText.Text = $"{collateralWalletName}: {value}";
-            }
-        }
-
-        private string? MiningAddress
-        {
-            get => this._miningAddress;
-            set
-            {
-                this._miningAddress = value;
-                this.MiningAddressText.Text = $"{miningWalletName}: {value}";
-            }
-        }
 
         private bool PrintStacktraces
         {
@@ -97,14 +61,7 @@ namespace MasternodeSetupTool
         public MainWindow(string[] args)
         {
             InitializeComponent();
-
-            string? appVersion = GetInformationalVersion();
-
-            if (appVersion != null)
-            {
-                this.VersionText.Text = $"Version: {appVersion}";
-            }
-
+            
             this.stackPanel = (StackPanel)this.FindName(MainStackPanelTag);
             this.statusBar = (TextBlock)this.FindName(StatusBarTextBlockTag);
 
@@ -116,11 +73,11 @@ namespace MasternodeSetupTool
             if (args.Any(a => a.Contains("-regtest")))
                 networkType = NetworkType.Regtest;
 
-            this.registrationService = new RegistrationService(networkType, this);
+            this.stateMachine = new StateMachine(networkType, this);
 
             this.timer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(1)
+                Interval = TimeSpan.FromMilliseconds(200)
             };
 
             this.timer.Tick += StateMachine_TickAsync;
@@ -129,938 +86,7 @@ namespace MasternodeSetupTool
 
         private async void StateMachine_TickAsync(object? sender, EventArgs e)
         {
-            this.timer.IsEnabled = false;
-
-            if (this.currentState == "Begin")
-            {
-                if (!this.createdButtons)
-                {
-                    this.createdButtons = true;
-
-                    Style flatStyle = this.FlatStyle;
-
-                    var button = new Button
-                    {
-                        Content = "Run Masternode",
-                        Tag = "RunMasterNode",
-                        Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
-                        Padding = new Thickness(4.0),
-                        Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
-                    };
-
-                    button.Click += new RoutedEventHandler(Button_Click);
-                    this.stackPanel.Children.Add(button);
-
-                    button = new Button
-                    {
-                        Content = "Register Masternode",
-                        Tag = "SetupMasterNode",
-                        Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
-                        Padding = new Thickness(4.0),
-                        Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
-                    };
-
-                    button.Click += new RoutedEventHandler(Button_Click);
-
-                    this.stackPanel.Children.Add(button);
-                }
-            }
-
-            if (this.nextState == null)
-            {
-                this.timer.IsEnabled = true;
-
-                return;
-            }
-
-            this.currentState = this.nextState;
-            this.nextState = null;
-
-            if (await RunBranchAsync())
-            {
-                this.timer.IsEnabled = true;
-
-                return;
-            }
-
-            if (await SetupBranchAsync())
-            {
-                this.timer.IsEnabled = true;
-
-                return;
-            }
-
-            this.timer.IsEnabled = true;
-        }
-
-        private async Task<bool> RunBranchAsync()
-        {
-            // The 'Run' branch
-
-            if (this.currentState == "RunMasterNode_KeyPresent")
-            {
-                if (!this.registrationService.CheckFederationKeyExists())
-                {
-                    MessageBox.Show("Federation key does not exist", "Key file missing", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.Yes);
-
-                    ResetState();
-
-                    return true;
-                }
-
-                this.nextState = "Run_StartMainChain";
-            }
-
-            if (this.currentState == "Run_StartMainChain")
-            {
-                if (!await this.registrationService.StartNodeAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true))
-                {
-                    Error("Cannot start the Mainchain node, aborting...");
-                    return false;
-                }
-
-                this.nextState = "Run_MainChainSynced";
-            }
-
-            if (this.currentState == "Run_MainChainSynced")
-            {
-                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
-
-                await this.registrationService.EnsureMainChainNodeAddressIndexerIsSyncedAsync().ConfigureAwait(true);
-
-                await this.registrationService.EnsureBlockstoreIsSyncedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
-
-                this.nextState = "Run_StartSideChain";
-            }
-
-            if (this.currentState == "Run_StartSideChain")
-            {
-                if (!await this.registrationService.StartNodeAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true))
-                {
-                    Error("Cannot start the Mainchain node, aborting...");
-                    return false;
-                }
-
-                this.nextState = "Run_SideChainSynced";
-            }
-
-            if (this.currentState == "Run_SideChainSynced")
-            {
-                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
-
-                await this.registrationService.EnsureNodeIsSyncedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
-
-                await this.registrationService.EnsureBlockstoreIsSyncedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
-
-                this.nextState = "Run_LaunchBrowser";
-            }
-
-            if (this.currentState == "Run_LaunchBrowser")
-            {
-                await this.registrationService.StartMasterNodeDashboardAsync().ConfigureAwait(true);
-                this.registrationService.LaunchBrowser($"http://localhost:{RegistrationService.DashboardPort}");
-
-                ResetState();
-
-                return true;
-            }
-
-            return false;
-        }
-
-        private async Task<bool> SetupBranchAsync()
-        {
-            if (this.currentState == "SetupMasterNode_Eula")
-            {
-                if (MessageBox.Show("100K collateral is required to operate a Masternode; in addition, a balance of 500.1 CRS is required to fund the registration transaction. Are you happy to proceed?", "End-User License Agreement", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
-                {
-                    ResetState();
-
-                    return true;
-                }
-
-                this.nextState = "Setup_KeyPresent";
-            }
-
-            if (this.currentState == "Setup_KeyPresent")
-            {
-                if (this.registrationService.CheckFederationKeyExists())
-                {
-                    if (MessageBox.Show("Federation key exists. Shall we create a new one?", "Key file already present", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.No)
-                    {
-                        this.nextState = "Setup_CreateRestoreUseExisting_StartMainChain";
-                        return true;
-                    }
-
-                    this.registrationService.DeleteFederationKey();
-                }
-
-                this.nextState = "Setup_CreateKey";
-            }
-
-            if (this.currentState == "Setup_CreateKey")
-            {
-                string savePath = this.registrationService.CreateFederationKey();
-
-                MessageBox.Show($"Your Masternode public key is: {this.registrationService.PubKey}");
-                MessageBox.Show($"Your private key has been saved in the root Cirrus data folder:\r\n{savePath}. Please ensure that you keep a backup of this file.");
-
-                this.nextState = "Setup_CreateRestoreUseExisting_StartMainChain";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_StartMainChain")
-            {
-                // All 3 sub-branches of this state require the mainchain and sidechain nodes to be initialized, so do that first.
-                if (!await this.registrationService.StartNodeAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true))
-                {
-                    Error("Cannot start the Mainchain node, aborting...");
-                    ResetState();
-
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_MainChainSynced";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_MainChainSynced")
-            {
-                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
-
-                await this.registrationService.EnsureMainChainNodeAddressIndexerIsSyncedAsync().ConfigureAwait(true);
-
-                await this.registrationService.EnsureBlockstoreIsSyncedAsync(NodeType.MainChain, this.registrationService.MainchainNetwork.DefaultAPIPort).ConfigureAwait(true);
-
-                this.nextState = "Setup_CreateRestoreUseExisting_StartSideChain";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_StartSideChain")
-            {
-                if (!await this.registrationService.StartNodeAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true))
-                {
-                    Error("Cannot start the Sidechain node, aborting...");
-                    ResetState();
-
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_SideChainSynced";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_SideChainSynced")
-            {
-                await this.registrationService.EnsureNodeIsInitializedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
-
-                await this.registrationService.EnsureNodeIsSyncedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
-
-                await this.registrationService.EnsureBlockstoreIsSyncedAsync(NodeType.SideChain, this.registrationService.SidechainNetwork.DefaultAPIPort).ConfigureAwait(true);
-                
-                this.nextState = "Setup_CreateRestoreUseExisting_CheckIsFederationMember";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_CheckIsFederationMember")
-            {
-                if (await this.registrationService.CheckIsFederationMemberAsync().ConfigureAwait(true))
-                {
-                    if (MessageBox.Show("Your node is already a member of a federation. Do you want to run the Masternode Dashboard instead?", "Member of a federation", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
-                    {
-                        this.nextState = "Run_LaunchBrowser";
-                        return true;
-                    }
-                    else
-                    {
-                        Info("Your node is already a member of a federation. Consider using 'Run Masternode' instead.");
-                        ResetState();
-                        return true;
-                    }
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_Select";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Select")
-            {
-                var dialog = new CreateRestoreUseExisting();
-                dialog.ShowDialog();
-
-                if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.CreateWallet)
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Create";
-                }
-
-                if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.RestoreWallet)
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Restore";
-                }
-
-                if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.UseExistingWallet)
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_UseExisting";
-                }
-
-                if (dialog.Choice == null)
-                {
-                    LogError("Registration cancelled.");
-                    ResetState();
-                    return true;
-                }
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Create")
-            {
-
-                if (!await HandleCreateWalletsAsync(NodeType.MainChain, createNewMnemonic: true))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_Create_Mining";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Create_Mining")
-            {
-
-                if (!await HandleCreateWalletsAsync(NodeType.SideChain, createNewMnemonic: true))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Create_AskForCollateral")
-            {
-                this.CollateralAddress = await HandleAddressSelectionAsync(NodeType.MainChain, collateralWalletName);
-                
-                if (this.CollateralAddress == null)
-                {
-                    this.CollateralAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName).ConfigureAwait(true);
-                    
-                    new ShowAddressDialog(NodeType.MainChain, this.CollateralAddress).ShowDialog();
-                }
-
-                // The 3 sub-branches recombine after this and can share common states.
-                this.nextState = "Setup_CreateRestoreUseExisting_CheckForCollateral";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_CheckForCollateral")
-            {
-                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, RegistrationService.CollateralRequirement).ConfigureAwait(true))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_CheckForRegistrationFee";
-                }
-                else
-                {
-                    Log($"Waiting for collateral wallet to have a balance of at least {RegistrationService.CollateralRequirement} STRAX", updateTag: this.currentState);
-                    this.nextState = "Setup_CreateRestoreUseExisting_CheckForCollateral";
-                }
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_CheckForRegistrationFee")
-            {
-                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(true))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_PerformRegistration";
-                }
-                else
-                {
-                    string? miningAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true);
-                    this.MiningAddress = miningAddress;
-                    Error($"Insufficient balance to pay registration fee. Please send 500.1 CRS to the mining wallet on address: {miningAddress}");
-                    this.nextState = "Setup_CreateRestoreUseExisting_WaitForBalance";
-                }
-            }
-
-            // if (this.currentState == "Setup_CreateRestoreUseExisting_PerformCrossChain")
-            // {
-            //     if (MessageBox.Show("Insufficient balance in the mining wallet. Perform a cross-chain transfer of 500.1 STRAX?", "Registration Fee Missing", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.No)
-            //     {
-            //         this.nextState = "Setup_CreateRestoreUseExisting_WaitForBalance";
-            //         return true;
-            //     }
-
-            //     this.cirrusAddress = await this.registrationService.GetFirstWalletAddressAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName).ConfigureAwait(true);
-
-            //     if (await this.registrationService.PerformCrossChainTransferAsync(this.registrationService.MainchainNetwork.DefaultAPIPort, this.collateralWalletName, this.collateralWalletPassword, "500.1", this.cirrusAddress, this.collateralAddress).ConfigureAwait(true))
-            //     {
-            //         this.nextState = "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer";
-            //     }
-            // }
-
-            // if (this.currentState == "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer")
-            // {
-
-            //     if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(true))
-            //     {
-            //         this.nextState = "Setup_CreateRestoreUseExisting_PerformRegistration";
-            //     } 
-            //     else
-            //     {
-            //         Log("Waiting for registration fee to be sent via cross-chain transfer...", updateTag: this.currentState);
-            //         await Task.Delay(TimeSpan.FromSeconds(30));
-            //         this.nextState = "Setup_CreateRestoreUseExisting_WaitForCrossChainTransfer";
-            //     }
-            // }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_WaitForBalance")
-            {
-
-                if (await this.registrationService.CheckWalletBalanceAsync(this.registrationService.SidechainNetwork.DefaultAPIPort, this.miningWalletName, RegistrationService.FeeRequirement).ConfigureAwait(true))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_PerformRegistration";
-                }
-                else
-                {
-                    Log("Waiting for registration fee to be sent to the mining wallet...", updateTag: this.currentState);
-                    this.nextState = "Setup_CreateRestoreUseExisting_WaitForBalance";
-                }
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_PerformRegistration")
-            {
-                bool registeredSuccessfully = await this.registrationService.CallJoinFederationRequestAsync(this.CollateralAddress, this.collateralWalletName, this.collateralWalletPassword, this.miningWalletName, this.miningWalletPassword).ConfigureAwait(true);
-                if (!registeredSuccessfully)
-                {
-                    Error("Failed to register your masternode, aborting...");
-                    ResetState();
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_WaitForRegistration";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_WaitForRegistration")
-            {
-                if (await this.registrationService.MonitorJoinFederationRequestAsync().ConfigureAwait(true))
-                {
-                    Log("Registration complete");
-                    this.nextState = "Run_LaunchBrowser";
-                }
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Restore")
-            {
-                if (!await HandleCreateWalletsAsync(NodeType.MainChain, createNewMnemonic: false))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_Restore_Mining";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_Restore_Mining")
-            {
-                if (!await HandleCreateWalletsAsync(NodeType.SideChain, createNewMnemonic: false))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting")
-            {
-                if (!await HandleExistingWalletNameAsync(NodeType.MainChain))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_CollateralPassword";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_CollateralPassword")
-            {
-                if (!await HandlePasswordAsync(NodeType.MainChain))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_Mining";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_Mining")
-            {
-                if (!await HandleExistingWalletNameAsync(NodeType.SideChain))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_MiningPassword";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_MiningPassword")
-            {
-                if (!await HandlePasswordAsync(NodeType.SideChain))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_Select";
-                    return true;
-                }
-
-                this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_CheckMainWalletSynced";
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_CheckMainWalletSynced")
-            {
-                if (await HandleWalletSyncAsync(NodeType.MainChain))
-                {
-                    this.nextState = "Setup_CreateRestoreUseExisting_UseExisting_CheckSideWalletSynced";
-                }
-                else
-                {
-                    return true;
-                }
-            }
-
-            if (this.currentState == "Setup_CreateRestoreUseExisting_UseExisting_CheckSideWalletSynced")
-            {
-                if (await HandleWalletSyncAsync(NodeType.SideChain))
-                {
-                    // Now we can jump back into the same sequence as the other 2 sub-branches.
-                    this.nextState = "Setup_CreateRestoreUseExisting_Create_AskForCollateral";
-                }
-                else
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private async Task<string?> HandleAddressSelectionAsync(NodeType nodeType, string walletName)
-        {
-            Network network = nodeType == NodeType.MainChain
-                ? this.registrationService.MainchainNetwork
-                : this.registrationService.SidechainNetwork;
-
-            List<AddressItem>? addressesWithBalance = await this.registrationService.GetWalletAddressesAsync(walletName, network.DefaultAPIPort);
-
-            if (addressesWithBalance != null)
-            {
-                var selectionDialog = new AddressSelectionDialog(addressesWithBalance);
-                selectionDialog.ShowDialog();
-
-                return selectionDialog.SelectedAddress;
-            }
-
-            return null;
-        }
-
-        private async Task<bool> HandleExistingWalletNameAsync(NodeType nodeType)
-        {
-            string? walletName;
-
-            Network network = nodeType == NodeType.MainChain
-                ? this.registrationService.MainchainNetwork
-                : this.registrationService.SidechainNetwork;
-
-            List<WalletItem>? wallesWithBalance = await this.registrationService.GetWalletsWithBalanceAsync(network.DefaultAPIPort);
-
-            if (wallesWithBalance != null)
-            {
-                var selectionDialog = new WalletSelectionDialog(wallesWithBalance);
-                selectionDialog.ShowDialog();
-                
-                if (selectionDialog.SelectedWalletName != null)
-                {
-                    walletName = selectionDialog.SelectedWalletName;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                do
-                {
-                    var inputBox = new InputBox($"Please enter your {WalletTypeName(nodeType)} ({nodeType}) wallet name:");
-
-                    walletName = inputBox.ShowDialog();
-
-                    if (walletName == null)
-                    {
-                        return false;
-                    }
-
-                    if (!string.IsNullOrEmpty(walletName))
-                    {
-                        try
-                        {
-                            if (await this.registrationService.FindWalletByNameAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
-                            {
-                                break;
-                            }
-                        }
-                        catch
-                        {
-                        }
-                    }
-
-                    MessageBox.Show($"Please ensure that you enter a valid {WalletTypeName(nodeType)} ({nodeType}) wallet name", "Error", MessageBoxButton.OK);
-                } while (true);
-            }
-
-            if (nodeType == NodeType.MainChain)
-            {
-                this.collateralWalletName = walletName;
-            }
-            else
-            {
-                this.miningWalletName = walletName;
-            }
-
-            return true;
-        }
-
-        private async Task<bool> HandleNewWalletNameAsync(NodeType nodeType)
-        {
-            string? walletName;
-            do
-            {
-                var inputBox = new InputBox($"Please enter new {WalletTypeName(nodeType)} ({nodeType}) wallet name:");
-
-                walletName = inputBox.ShowDialog();
-
-                if (walletName == null)
-                {
-                    return false;
-                }
-
-                if (!string.IsNullOrEmpty(walletName))
-                {
-                    try
-                    {
-                        Network network = nodeType == NodeType.MainChain
-                            ? this.registrationService.MainchainNetwork
-                            : this.registrationService.SidechainNetwork;
-
-                        if (!await this.registrationService.FindWalletByNameAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            MessageBox.Show("A wallet with this name already exists", "Error");
-                        }
-                    }
-                    catch
-                    {
-                    }
-                }
-
-                MessageBox.Show($"Please ensure that you enter a valid (and non-existing) {WalletTypeName(nodeType)} ({nodeType}) wallet name", "Error", MessageBoxButton.OK);
-            } while (true);
-
-            if (nodeType == NodeType.MainChain)
-            {
-                this.collateralWalletName = walletName;
-            }
-            else
-            {
-                this.miningWalletName = walletName;
-            }
-
-            return true;
-        }
-
-        private bool HandleNewMnemonic(NodeType nodeType, bool canChangeMnemonic = false)
-        {
-            var mnemonic = string.Join(' ', new Mnemonic("English", WordCount.Twelve).Words);
-
-            var dialog = new ConfirmationDialog($"Enter mnemonic for the {WalletTypeName(nodeType)} wallet", "Mnemonic", mnemonic, canChangeMnemonic);
-            dialog.ShowDialog();
-
-            if (dialog.DialogResult != true)
-            {
-                return false;
-            }
-
-            if (nodeType == NodeType.MainChain)
-            {
-                this.collateralWalletMnemonic = mnemonic;
-            }
-            else
-            {
-                this.miningWalletMnemonic = mnemonic;
-            }
-
-            return true;
-        }
-
-        private bool HandleUserMnemonic(NodeType nodeType)
-        {
-            string? mnemonic;
-
-            do
-            {
-                var inputBox = new InputBox($"Please enter your mnemonic for the {WalletTypeName(nodeType)} ({nodeType}) wallet", "Mnemonic");
-
-                mnemonic = inputBox.ShowDialog();
-
-                if (mnemonic == null)
-                {
-                    return false;
-                }
-
-                if (!string.IsNullOrEmpty(mnemonic))
-                {
-                    try
-                    {
-                        // Test the mnemonic to ensure validity.
-                        var temp = new Mnemonic(mnemonic, Wordlist.English);
-
-                        // If there was no exception, break out of the loop and continue.
-                        break;
-                    }
-                    catch
-                    {
-                    }
-                }
-
-                MessageBox.Show("Please ensure that you enter a valid mnemonic", "Error", MessageBoxButton.OK);
-            } while (true);
-
-            if (nodeType == NodeType.MainChain)
-            {
-                this.collateralWalletMnemonic = mnemonic;
-            }
-            else
-            {
-                this.miningWalletMnemonic = mnemonic;
-            }
-
-            return true;
-        }
-
-        private bool HandlePassphrase(NodeType nodeType)
-        {
-            var dialog = new ConfirmationDialog($"Enter passphrase for the {WalletTypeName(nodeType)} wallet",
-                "Passphrase",
-                "",
-                true,
-                allowEmpty: true);
-
-            dialog.ShowDialog();
-
-            if (dialog.DialogResult != true)
-            {
-                return false;
-            }
-
-            string result = dialog.Text2.Text ?? "";
-
-            if (nodeType == NodeType.MainChain)
-            {
-                this.collateralWalletPassphrase = result;
-            }
-            else
-            {
-                this.miningWalletPassphrase = result;
-            }
-
-            return true;
-        }
-
-        private async Task<bool> HandlePasswordAsync(NodeType nodeType)
-        {
-            while (true)
-            {
-                var dialog = new ConfirmationDialog(
-                $"Enter {WalletTypeName(nodeType)} wallet password ({nodeType})",
-                "Password",
-                "",
-                true);
-
-                dialog.ShowDialog();
-
-                if (dialog.DialogResult != true)
-                {
-                    return false;
-                }
-
-                string password = dialog.Text2.Text ?? string.Empty;
-
-                string walletName;
-                if (nodeType == NodeType.MainChain)
-                {
-                    walletName = this.collateralWalletName ?? "";
-                }
-                else
-                {
-                    walletName = this.miningWalletName ?? "";
-                }
-
-                if (await this.registrationService.CheckWalletPasswordAsync(NodeApiPort(nodeType), walletName, password) == false)
-                {
-                    if (MessageBox.Show("The password you entered is incorrect. Do you want to enter it again?", "Incorrect password", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.No)
-                    {
-                        return false;
-                    }
-
-                    continue;
-                }
-
-                if (nodeType == NodeType.MainChain)
-                {
-                    this.collateralWalletPassword = dialog.Text2.Text;
-                }
-                else
-                {
-                    this.miningWalletPassword = dialog.Text2.Text;
-                }
-
-                return true;
-            }
-        }
-
-        private async Task<bool> HandleWalletCreationAsync(NodeType nodeType, bool createNewWallet)
-        {
-            Network network = nodeType == NodeType.MainChain
-                ? this.registrationService.MainchainNetwork
-                : this.registrationService.SidechainNetwork;
-
-            string? walletName = nodeType == NodeType.MainChain
-                ? this.collateralWalletName
-                : this.miningWalletName;
-
-            string? walletMnemonic = nodeType == NodeType.MainChain
-                ? this.collateralWalletMnemonic
-                : this.miningWalletMnemonic;
-
-            string? walletPassphrase = nodeType == NodeType.MainChain
-                ? this.collateralWalletPassphrase
-                : this.miningWalletPassphrase;
-
-            string? walletPassword = nodeType == NodeType.MainChain
-                ? this.collateralWalletPassword
-                : this.miningWalletPassword;
-
-            while (true)
-            {
-                try
-                {
-                    if (walletName == null
-                        || walletMnemonic == null
-                        || walletPassphrase == null
-                        || walletPassword == null
-                        || !await this.registrationService.RestoreWalletAsync(network.DefaultAPIPort, nodeType, walletName, walletMnemonic, walletPassphrase, walletPassword, createNewWallet).ConfigureAwait(true))
-                    {
-                        string action = createNewWallet ? "create" : "restore";
-                        LogError($"Cannot {action} {WalletTypeName(nodeType)} wallet, aborting...");
-                        return false;
-                    }
-                    break;
-                }
-                catch (WalletCollisionException)
-                {
-                    LogError($"The {WalletTypeName(nodeType)} wallet with this mnemonic already exists.");
-                    LogError("Please provide a new mnemonic.");
-
-                    if (!HandleNewMnemonic(nodeType, canChangeMnemonic: true))
-                    {
-                        LogError("New mnemonic was not provided. Aborting...");
-                        return false;
-                    }
-                }
-            }
-
-            if (!await this.registrationService.ResyncWalletAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
-            {
-                LogError($"Cannot resync {WalletTypeName(nodeType)} wallet, aborting...");
-                return false;
-            }
-
-            return true;
-        }
-
-        private async Task<bool> HandleWalletSyncAsync(NodeType nodeType)
-        {
-            string logTag = "HandleWalletSyncAsync" + nodeType;
-
-            Network network = nodeType == NodeType.MainChain
-                ? this.registrationService.MainchainNetwork
-                : this.registrationService.SidechainNetwork;
-
-            string? walletName = nodeType == NodeType.MainChain
-                ? this.collateralWalletName
-                : this.miningWalletName;
-
-            if (walletName == null)
-            {
-                throw new ArgumentException("Wallet name can not be null.");
-            }
-
-            int percentSynced = await this.registrationService.WalletSyncProgressAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true);
-            Log($"{nodeType} ({WalletTypeName(nodeType)}) wallet is {percentSynced}% synced", updateTag: logTag);
-
-            if (await this.registrationService.IsWalletSyncedAsync(network.DefaultAPIPort, walletName).ConfigureAwait(true))
-            {
-                Log($"{nodeType} ({WalletTypeName(nodeType)}) wallet synced successfuly.", updateTag: logTag);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        private async Task<bool> HandleCreateWalletsAsync(NodeType nodeType, bool createNewMnemonic)
-        {
-            if (createNewMnemonic)
-            {
-                if (!HandleNewMnemonic(nodeType))
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                if (!HandleUserMnemonic(nodeType))
-                {
-                    return false;
-                }
-            }
-
-            if (!await HandleNewWalletNameAsync(nodeType))
-            {
-                return false;
-            }
-
-            if (!HandlePassphrase(nodeType))
-            {
-                return false;
-            }
-
-            if (!await HandlePasswordAsync(nodeType))
-            {
-                return false;
-            }
-
-            if (!await HandleWalletCreationAsync(nodeType, createNewMnemonic))
-            {
-                return false;
-            }
-
-            try
-            {
-                while (!await HandleWalletSyncAsync(nodeType))
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-                }
-            }
-            catch
-            {
-                return false;
-            }
-
-            return true;
+            await this.stateMachine.TickAsync();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -1076,23 +102,15 @@ namespace MasternodeSetupTool
             {
                 case "RunMasterNode":
                     {
-                        this.nextState = "RunMasterNode_KeyPresent";
-
+                        this.stateMachine.OnRunNode();
                         break;
                     }
                 case "SetupMasterNode":
                     {
-                        this.nextState = "SetupMasterNode_Eula";
-
+                        this.stateMachine.OnSetupNode();
                         break;
                     }
             }
-        }
-
-        private void ResetState()
-        {
-            this.nextState = null;
-            this.currentState = "Begin";
         }
 
         private void LogWithBrush(string message, Brush? brush = null, string? updateTag = null)
@@ -1170,16 +188,379 @@ namespace MasternodeSetupTool
             return nodeType == NodeType.MainChain ? "collateral" : "mining";
         }
 
-        private int NodeApiPort(NodeType nodeType)
-        {
-            Network network = nodeType == NodeType.MainChain ? this.registrationService.MainchainNetwork : this.registrationService.SidechainNetwork;
-            return network.DefaultAPIPort;
-        }
-
         public static string? GetInformationalVersion() =>
             Assembly
                 .GetExecutingAssembly()
                 ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
                 ?.InformationalVersion;
+
+        public async Task OnStart()
+        {
+            this.collateralWalletName = null;
+            this.miningWalletName = null;
+
+            this.collateralAddress = null;
+            this.miningAddress = null;
+
+            this.UpdateWalletInfoLabel(NodeType.MainChain);
+            this.UpdateWalletInfoLabel(NodeType.SideChain);
+
+            if (!this.createdButtons)
+            {
+                this.createdButtons = true;
+
+                Style flatStyle = this.FlatStyle;
+
+                try
+                {
+                    var button = new Button
+                    {
+                        Content = "Run Masternode",
+                        Tag = "RunMasterNode",
+                        Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
+                        Padding = new Thickness(4.0),
+                        Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
+                    };
+                    button.Click += new RoutedEventHandler(Button_Click);
+                    this.stackPanel.Children.Add(button);
+
+                    button = new Button
+                    {
+                        Content = "Register Masternode",
+                        Tag = "SetupMasterNode",
+                        Margin = new Thickness(16.0, 4.0, 16.0, 4.0),
+                        Padding = new Thickness(4.0),
+                        Background = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
+                    };
+
+                    button.Click += new RoutedEventHandler(Button_Click);
+
+                    this.stackPanel.Children.Add(button);
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+        }
+
+        public async Task OnProgramVersionAvailable(string? version)
+        {
+            if (version != null)
+            {
+                this.VersionText.Text = $"Version: {version}";
+            }
+        }
+
+        public async Task OnFederationKeyMissing()
+        {
+            MessageBox.Show("Federation key does not exist", "Key file missing", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.Yes);
+        }
+
+        public async Task OnNodeFailedToStart(NodeType nodeType, string? reason = null)
+        {
+            Error($"Cannot start the {nodeType} node, aborting...");
+            if (reason != null)
+            {
+                Error($"Reason: {reason}");
+            }
+        }
+
+        public async Task<bool> OnAskForEULA()
+        {
+            return MessageBox.Show("100K collateral is required to operate a Masternode; in addition, a balance of 500.1 CRS is required to fund the registration transaction. Are you happy to proceed?",
+                            "End-User License Agreement",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Warning,
+                            MessageBoxResult.No) == MessageBoxResult.Yes;
+        }
+        
+        public async Task<bool> OnAskForNewFederationKey()
+        {
+            return MessageBox.Show(
+                    "Federation key exists. Shall we create a new one?",
+                    "Key file already present",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning,
+                    MessageBoxResult.No) == MessageBoxResult.Yes;
+        }
+
+        public async Task OnShowNewFederationKey(string pubKey, string savePath)
+        {
+            MessageBox.Show($"Your Masternode public key is: {pubKey}");
+            MessageBox.Show($"Your private key has been saved in the root Cirrus data folder:\r\n{savePath}. Please ensure that you keep a backup of this file.");
+        }
+
+        public async Task<bool> OnAskToRunIfAlreadyMember()
+        {
+            return MessageBox.Show("Your node is already a member of a federation. Do you want to run the Masternode Dashboard instead?",
+                                                   "Member of a federation",
+                                                   MessageBoxButton.YesNo,
+                                                   MessageBoxImage.Warning,
+                                                   MessageBoxResult.No) == MessageBoxResult.Yes;
+        }
+
+        public async Task OnAlreadyMember()
+        {
+            Info("Your node is already a member of a federation. Consider using 'Run Masternode' instead.");
+        }
+
+        public async Task<WalletSource?> OnAskForWalletSource(NodeType nodeType)
+        {
+            var dialog = new CreateRestoreUseExisting();
+            dialog.ShowDialog();
+
+            if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.CreateWallet)
+            {
+                return WalletSource.NewWallet;
+            }
+
+            if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.RestoreWallet)
+            {
+                return WalletSource.RestoreWallet;
+            }
+
+            if (dialog.Choice == CreateRestoreUseExisting.ButtonChoice.UseExistingWallet)
+            {
+                return WalletSource.UseExistingWallet;
+            }
+
+            return null;
+        }
+
+        public async Task<string?> OnChooseWallet(List<WalletItem> wallets, NodeType nodeType)
+        {
+            var selectionDialog = new WalletSelectionDialog(wallets);
+            selectionDialog.ShowDialog();
+
+            return selectionDialog.SelectedWalletName;
+        }
+
+        public async Task<string?> OnChooseAddress(List<AddressItem> addresses, NodeType nodeType)
+        {
+            var selectionDialog = new AddressSelectionDialog(addresses);
+            selectionDialog.ShowDialog();
+
+            return selectionDialog.SelectedAddress;
+        }
+
+        public async Task OnWaitingForCollateral()
+        {
+            Log($"Waiting for collateral wallet to have a balance of at least {RegistrationService.CollateralRequirement} STRAX", updateTag: "OnWaitingForCollateral");
+        }
+
+        public async Task OnWaitingForRegistrationFee()
+        {
+            Log("Waiting for registration fee to be sent to the mining wallet...", updateTag: "OnWaitingForRegistrationFee");
+        }
+
+        public async Task OnMissingRegistrationFee(string address)
+        {
+            Error($"Insufficient balance to pay registration fee. Please send 500.1 CRS to the mining wallet on address: {address}");
+        }
+
+        public async Task OnRegistrationCanceled()
+        {
+            LogError("Registration cancelled.");
+        }
+
+        public async Task OnRegistrationComplete()
+        {
+            Log("Registration complete");
+        }
+
+        public async Task OnRegistrationFailed()
+        {
+            Error("Failed to register your masternode, aborting...");
+        }
+
+        public async Task<bool> OnAskForMnemonicConfirmation(NodeType nodeType, string mnemonic)
+        {
+            var dialog = new ConfirmationDialog($"Enter mnemonic for the {WalletTypeName(nodeType)} wallet", "Mnemonic", mnemonic, false);
+            dialog.ShowDialog();
+            return dialog.DialogResult == true;
+        }
+
+        public async Task<string?> OnAskForUserMnemonic(NodeType nodeType)
+        {
+            var inputBox = new InputBox($"Please enter your mnemonic for the {WalletTypeName(nodeType)} ({nodeType}) wallet", "Mnemonic");
+            return inputBox.ShowDialog();
+        }
+
+        public async Task<string?> OnAskForWalletName(NodeType nodeType, bool newWallet)
+        {
+            var inputBox = new InputBox($"Please enter {nodeType} wallet name:");
+            return inputBox.ShowDialog();
+        }
+
+        public async Task<string?> OnAskForPassphrase(NodeType nodeType)
+        {
+            var dialog = new ConfirmationDialog($"Enter passphrase for the {nodeType} wallet",
+                "Passphrase",
+                "",
+                true,
+                allowEmpty: true);
+
+            dialog.ShowDialog();
+
+            if (dialog.DialogResult != true)
+            {
+                return null;
+            }
+
+            return dialog.Text2.Text ?? "";
+        }
+
+        public async Task<string?> OnAskForWalletPassword(NodeType nodeType)
+        {
+            var dialog = new ConfirmationDialog(
+                titleText: $"Enter {WalletTypeName(nodeType)} wallet password ({nodeType})",
+                labelText: "Password",
+                firstTextContent: "",
+                firstTextEditable: true);
+
+            dialog.ShowDialog();
+
+            if (dialog.DialogResult != true)
+            {
+                return null;
+            }
+
+            return dialog.Text2.Text ?? string.Empty;
+        }
+
+        public async Task<string?> OnAskCreatePassword(NodeType nodeType)
+        {
+            var dialog = new ConfirmationDialog(
+                titleText: $"Enter a new {WalletTypeName(nodeType)} wallet password ({nodeType})",
+                labelText: "Password",
+                firstTextContent: "",
+                firstTextEditable: true);
+
+            dialog.ShowDialog();
+
+            if (dialog.DialogResult != true)
+            {
+                return null;
+            }
+
+            return dialog.Text2.Text ?? string.Empty;
+        }
+
+        public async Task<bool> OnAskReenterPassword(NodeType nodeType)
+        {
+            return MessageBox.Show("The password you entered is incorrect. Do you want to enter it again?",
+                                   "Incorrect password",
+                                   MessageBoxButton.YesNo,
+                                   MessageBoxImage.Warning,
+                                   MessageBoxResult.No) == MessageBoxResult.No;
+        }
+
+        public async Task OnWalletNameExists(NodeType nodeType)
+        {
+            MessageBox.Show("A wallet with this name already exists", "Error");
+        }
+
+        public async Task OnMnemonicIsInvalid(NodeType nodeType)
+        {
+            MessageBox.Show("Please ensure that you enter a valid mnemonic", "Error", MessageBoxButton.OK);
+        }
+
+        public async Task OnMnemonicExists(NodeType nodeType)
+        {
+            LogError($"The {WalletTypeName(nodeType)} wallet with this mnemonic already exists.");
+            LogError("Please provide a new mnemonic.");
+        }
+
+        public async Task OnWalletExistsOrInvalid(NodeType nodeType)
+        {
+            MessageBox.Show("A wallet with this name already exists", "Error");
+        }
+
+        public async Task OnWalletSyncing(NodeType nodeType, int progress)
+        {
+            Log($"{nodeType} ({WalletTypeName(nodeType)}) wallet is {progress}% synced", updateTag: $"{nodeType}WalletSyncing");
+        }
+
+        public async Task OnWalletSynced(NodeType nodeType)
+        {
+            Log($"{nodeType} ({WalletTypeName(nodeType)}) wallet synced successfuly.", updateTag: $"{nodeType}WalletSyncing");
+        }
+
+        public async Task OnShowWalletName(NodeType nodeType, string walletName)
+        {
+            if (nodeType == NodeType.MainChain)
+            {
+                this.collateralWalletName = walletName;
+            } 
+            else
+            {
+                this.miningWalletName = walletName;
+            }
+
+            this.UpdateWalletInfoLabel(nodeType);
+        }
+
+        public async Task OnShowWalletAddress(NodeType nodeType, string address)
+        {
+            if (nodeType == NodeType.MainChain)
+            {
+                this.collateralAddress = address;
+            }
+            else
+            {
+                this.miningAddress = address;
+            }
+
+            this.UpdateWalletInfoLabel(nodeType);
+        }
+
+        public async Task OnRestoreWalletFailed(NodeType nodeType)
+        {
+            LogError($"Can not restore a {WalletTypeName(nodeType)} wallet, aborting...");
+        }
+
+        public async Task OnCreateWalletFailed(NodeType nodeType)
+        {
+            LogError($"Can not create a {WalletTypeName(nodeType)} wallet, aborting...");
+        }
+
+        public async Task OnResyncFailed(NodeType nodeType)
+        {
+            LogError($"Cannot resync {WalletTypeName(nodeType)} wallet, aborting...");
+        }
+
+        private void UpdateWalletInfoLabel(NodeType nodeType)
+        {
+            string? name;
+            string? address;
+
+            TextBlock target;
+
+            if (nodeType == NodeType.MainChain)
+            {
+                name = this.collateralWalletName;
+                address = this.collateralAddress;
+                target = this.CollateralAddressText;
+            }
+            else
+            {
+                name = this.miningWalletName;
+                address = this.miningAddress;
+                target = this.MiningAddressText;
+            }
+
+            string label = name;
+            if (label == null)
+            {
+                label = "";
+            } else
+            {
+                if (address != null)
+                    label += $": {address}";
+            }
+
+            target.Text = label;
+        }
     }
 }
